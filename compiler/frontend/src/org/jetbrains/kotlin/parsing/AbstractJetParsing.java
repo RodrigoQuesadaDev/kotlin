@@ -456,6 +456,33 @@ import static org.jetbrains.kotlin.lexer.JetTokens.*;
         }
     }
 
+    protected class AnnotationTargetStop extends AbstractTokenStreamPredicate {
+        private final TokenSet stopAt;
+        private final TokenSet annotationTargets;
+
+        private IElementType previousToken;
+        private IElementType tokenBeforePrevious;
+
+        public AnnotationTargetStop(TokenSet stopAt, TokenSet annotationTargets) {
+            this.stopAt = stopAt;
+            this.annotationTargets = annotationTargets;
+        }
+
+        @Override
+        public boolean matching(boolean topLevel) {
+            if (atSet(stopAt)) return true;
+
+            if (at(COLON) && !(tokenBeforePrevious == AT && (previousToken == IDENTIFIER || annotationTargets.contains(previousToken)))) {
+                return true;
+            }
+
+            tokenBeforePrevious = previousToken;
+            previousToken = tt();
+
+            return false;
+        }
+    }
+
     protected class AtFirstTokenOfTokens extends AbstractTokenStreamPredicate {
 
         private final IElementType[] tokens;

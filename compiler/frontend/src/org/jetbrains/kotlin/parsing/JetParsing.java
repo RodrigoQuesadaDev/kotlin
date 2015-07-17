@@ -2124,7 +2124,7 @@ public class JetParsing extends AbstractJetParsing {
     }
 
     public void parseModifierListWithUnescapedAnnotations(TokenSet lookFor, TokenSet stopAt) {
-        int lastId = findLastBefore(lookFor, stopAt, false);
+        int lastId = matchTokenStreamPredicate(new LastBefore(new AtSet(lookFor), new AnnotationTargetStop(stopAt, ANNOTATION_TARGETS), false));
         createTruncatedBuilder(lastId).parseModifierList(ALLOW_UNESCAPED_REGULAR_ANNOTATIONS);
     }
 
@@ -2223,7 +2223,7 @@ public class JetParsing extends AbstractJetParsing {
     private boolean parseValueParameter(boolean rollbackOnFailure, boolean typeRequired) {
         PsiBuilder.Marker parameter = mark();
 
-        parseModifierListWithUnescapedAnnotations(TokenSet.create(COMMA, RPAR, COLON));
+        parseModifierListWithUnescapedAnnotations(TokenSet.create(COMMA, RPAR));
 
         if (at(VAR_KEYWORD) || at(VAL_KEYWORD)) {
             advance(); // VAR_KEYWORD | VAL_KEYWORD
