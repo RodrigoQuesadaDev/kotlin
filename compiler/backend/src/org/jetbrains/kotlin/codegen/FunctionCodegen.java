@@ -288,8 +288,12 @@ public class FunctionCodegen {
 
         Label methodEnd;
         if (context.getParentContext() instanceof PackageFacadeContext) {
+            //context.setMethodStartLabel(methodBegin);
+
             generatePackageDelegateMethodBody(mv, signature.getAsmMethod(), (PackageFacadeContext) context.getParentContext());
             methodEnd = new Label();
+
+            //context.setMethodEndLabel(methodEnd);
         }
         else {
             FrameMap frameMap = createFrameMap(parentCodegen.state, functionDescriptor, signature, isStaticMethod(context.getContextKind(),
