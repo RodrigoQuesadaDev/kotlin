@@ -24,6 +24,7 @@ public class ModuleMapping(val moduleMapping: String) {
 
     init {
         for (i in moduleMapping.split("\n")) {
+            if(i.isEmpty()) continue
             val (pakage, facade) = i.split("->")
             val miniFacades = package2MiniFacades.getOrPut(pakage, { PackageFacades(pakage) })
             miniFacades.parts.add(facade)
@@ -37,7 +38,7 @@ public class PackageFacades(val internalName: String) {
 
     fun serialize(out: Writer) {
         for (i in parts) {
-            out.write("$internalName->$i")
+            out.write("$internalName->$i\n")
         }
     }
 }
