@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.cli.jvm.compiler.CliLightClassGenerationSupport
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.config.getModuleName
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -34,7 +35,6 @@ import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProviderFactory
 import org.jetbrains.kotlin.test.ConfigurationKind
 import org.jetbrains.kotlin.test.JetTestUtils
-import org.jetbrains.kotlin.types.DynamicTypesSettings
 import java.io.File
 import java.util.ArrayList
 
@@ -47,7 +47,7 @@ public abstract class AbstractDescriptorRendererTest : KotlinTestWithEnvironment
         val fileText = FileUtil.loadFile(File(path), true)
         val psiFile = JetPsiFactory(getProject()).createFile(fileText)
 
-        val context = TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(getProject())
+        val context = TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(getProject(), environment.getModuleName())
 
         val resolveSession = createLazyResolveSession(
                 context,
