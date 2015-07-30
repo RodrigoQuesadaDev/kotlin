@@ -145,7 +145,7 @@ public class KotlinLightClassForExplicitDeclaration extends KotlinWrappingLightC
 
             boolean createWrapper = forceMethodWrapping;
             // Use PsiClass wrapper instead of package light class to avoid names like "FooPackage" in Type Hierarchy and related views
-            if (containingClass instanceof KotlinLightClassForPackage) {
+            if (containingClass instanceof KotlinLightClassForFacade) {
                 containingClass = new LightClass(containingClass, JetLanguage.INSTANCE) {
                     @Nullable
                     @Override
