@@ -87,7 +87,7 @@ public class ClassFileFactory implements OutputFileCollection {
         String moduleName = state.getModule().getName().asString();
         moduleName = moduleName.replaceAll(">", "").replaceAll("<", "");
         moduleName = moduleName.substring(moduleName.lastIndexOf(" ") + 1);
-        String outputFilePath = "META-INF/" + moduleName + ".mapping";
+        String outputFilePath = "META-INF/" + moduleName + ".kotlin_module";
         final StringWriter moduleMapping = new StringWriter(1024);
         for (PackageCodegen codegen : values) {
             codegen.getFacades().serialize(moduleMapping);
