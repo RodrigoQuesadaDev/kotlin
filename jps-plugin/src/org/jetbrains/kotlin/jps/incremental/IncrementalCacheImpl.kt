@@ -25,7 +25,6 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor
 import org.jetbrains.jps.incremental.storage.StorageOwner
 import org.jetbrains.kotlin.config.IncrementalCompilation
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.jps.build.KotlinBuilder
 import org.jetbrains.kotlin.jps.incremental.IncrementalCacheImpl.RecompilationDecision.DO_NOTHING
 import org.jetbrains.kotlin.jps.incremental.IncrementalCacheImpl.RecompilationDecision.RECOMPILE_ALL_IN_CHUNK_AND_DEPENDANTS
@@ -39,17 +38,12 @@ import org.jetbrains.kotlin.load.kotlin.header.isCompatiblePackageFacadeKind
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.serialization.Flags
-import org.jetbrains.kotlin.serialization.ProtoBuf
 import org.jetbrains.kotlin.serialization.jvm.BitEncoding
-import org.jetbrains.kotlin.serialization.jvm.JvmProtoBufUtil
-import org.jetbrains.kotlin.serialization.deserialization.visibility
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.org.objectweb.asm.*
 import java.io.*
 import java.security.MessageDigest
 import java.util.ArrayList
-import java.util.Arrays
 import java.util.HashMap
 
 val INLINE_ANNOTATION_DESC = "Lkotlin/inline;"
@@ -60,7 +54,7 @@ private val CACHE_DIRECTORY_NAME = "kotlin"
 class CacheFormatVersion(targetDataRoot: File) {
     companion object {
         // Change this when incremental cache format changes
-        private val INCREMENTAL_CACHE_OWN_VERSION = 3
+        private val INCREMENTAL_CACHE_OWN_VERSION = 4
         private val CACHE_FORMAT_VERSION: Int = INCREMENTAL_CACHE_OWN_VERSION * 1000000 + JvmAbi.VERSION
 
         private val NON_INCREMENTAL_MODE_PSEUDO_VERSION = Int.MAX_VALUE
@@ -155,14 +149,14 @@ public class IncrementalCacheImpl(targetDataRoot: File) : StorageOwner, Incremen
         val decision = when {
             header.isCompatiblePackageFacadeKind() ->
                 getRecompilationDecision(
-                        protoChanged = protoMap.put(className, BitEncoding.decodeBytes(header.annotationData!!), isPackage = true),
+                        protoChanged = protoMap.put(className, ProtoMapValue(true, BitEncoding.decodeBytes(header.annotationData!!))),
                         constantsChanged = false,
                         inlinesChanged = false
                 )
             header.isCompatibleClassKind() ->
                 when (header.classKind!!) {
                     JvmAnnotationNames.KotlinClass.Kind.CLASS -> getRecompilationDecision(
-                            protoChanged = protoMap.put(className, BitEncoding.decodeBytes(header.annotationData!!), isPackage = false),
+                            protoChanged = protoMap.put(className, ProtoMapValue(false, BitEncoding.decodeBytes(header.annotationData!!))),
                             constantsChanged = constantsMap.process(className, fileBytes),
                             inlinesChanged = inlineFunctionsMap.process(className, fileBytes)
                     )
@@ -223,7 +217,7 @@ public class IncrementalCacheImpl(targetDataRoot: File) : StorageOwner, Incremen
     }
 
     public override fun getPackageData(fqName: String): ByteArray? {
-        return protoMap[JvmClassName.byFqNameWithoutInnerClasses(PackageClassUtils.getPackageClassFqName(FqName(fqName)))]
+        return protoMap[JvmClassName.byFqNameWithoutInnerClasses(PackageClassUtils.getPackageClassFqName(FqName(fqName)))]?.bytes
     }
 
     override fun flush(memoryCachesOnly: Boolean) {
@@ -297,29 +291,29 @@ public class IncrementalCacheImpl(targetDataRoot: File) : StorageOwner, Incremen
         protected abstract fun dumpValue(value: V): String
     }
 
-    private inner class ProtoMap : BasicMap<ByteArray>() {
-        override fun createMap(): PersistentHashMap<String, ByteArray> = PersistentHashMap(
+    private inner class ProtoMap : BasicMap<ProtoMapValue>() {
+        override fun createMap(): PersistentHashMap<String, ProtoMapValue> = PersistentHashMap(
                 File(baseDir, PROTO_MAP),
                 EnumeratorStringDescriptor(),
-                ByteArrayExternalizer
+                ProtoMapValueExternalizer
         )
 
-        public fun put(className: JvmClassName, data: ByteArray, isPackage: Boolean): Boolean {
+        public fun put(className: JvmClassName, data: ProtoMapValue): Boolean {
             val key = className.getInternalName()
             val oldData = storage[key]
-            if (Arrays.equals(data, oldData)) {
+            if (data == oldData) {
                 return false
             }
             storage.put(key, data)
 
-            if (oldData != null && isOpenPartNotChanged(oldData, data, isPackage)) {
+            if (oldData != null && difference(oldData, data) == DifferenceKind.NONE) {
                 return false
             }
 
             return true
         }
 
-        public fun get(className: JvmClassName): ByteArray? {
+        public fun get(className: JvmClassName): ProtoMapValue? {
             return storage[className.getInternalName()]
         }
 
@@ -327,55 +321,8 @@ public class IncrementalCacheImpl(targetDataRoot: File) : StorageOwner, Incremen
             storage.remove(className.getInternalName())
         }
 
-        override fun dumpValue(value: ByteArray): String {
-            return java.lang.Long.toHexString(value.md5())
-        }
-
-        private fun isOpenPartNotChanged(oldData: ByteArray, newData: ByteArray, isPackageFacade: Boolean): Boolean {
-            if (isPackageFacade) {
-                return isPackageFacadeOpenPartNotChanged(oldData, newData)
-            }
-            else {
-                return isClassOpenPartNotChanged(oldData, newData)
-            }
-        }
-
-        private fun isPackageFacadeOpenPartNotChanged(oldData: ByteArray, newData: ByteArray): Boolean {
-            val oldPackageData = JvmProtoBufUtil.readPackageDataFrom(oldData)
-            val newPackageData = JvmProtoBufUtil.readPackageDataFrom(newData)
-
-            val compareObject = ProtoCompareGenerated(oldPackageData.nameResolver, newPackageData.nameResolver)
-            return compareObject.checkEquals(oldPackageData.packageProto, newPackageData.packageProto)
-        }
-
-        private fun isClassOpenPartNotChanged(oldData: ByteArray, newData: ByteArray): Boolean {
-            val oldClassData = JvmProtoBufUtil.readClassDataFrom(oldData)
-            val newClassData = JvmProtoBufUtil.readClassDataFrom(newData)
-
-            val compareObject = object : ProtoCompareGenerated(oldClassData.nameResolver, newClassData.nameResolver) {
-                override fun checkEqualsClassMember(old: ProtoBuf.Class, new: ProtoBuf.Class): Boolean =
-                        checkEquals(old.memberList, new.memberList)
-
-                override fun checkEqualsClassSecondaryConstructor(old: ProtoBuf.Class, new: ProtoBuf.Class): Boolean =
-                        checkEquals(old.secondaryConstructorList, new.secondaryConstructorList)
-
-                private fun checkEquals(oldList: List<ProtoBuf.Callable>, newList: List<ProtoBuf.Callable>): Boolean {
-                    val oldListFiltered = oldList.filter { !it.isPrivate() }
-                    val newListFiltered = newList.filter { !it.isPrivate() }
-
-                    if (oldListFiltered.size() != newListFiltered.size()) return false
-
-                    for (i in oldListFiltered.indices) {
-                        if (!checkEquals(oldListFiltered[i], newListFiltered[i])) return false
-                    }
-
-                    return true
-                }
-
-                private fun ProtoBuf.Callable.isPrivate(): Boolean = Visibilities.isPrivate(visibility(Flags.VISIBILITY.get(flags)))
-            }
-
-            return compareObject.checkEquals(oldClassData.classProto, newClassData.classProto)
+        override fun dumpValue(value: ProtoMapValue): String {
+            return java.lang.Long.toHexString(value.bytes.md5())
         }
     }
 
@@ -705,17 +652,19 @@ private fun ByteArray.md5(): Long {
            )
 }
 
-private object ByteArrayExternalizer : DataExternalizer<ByteArray> {
-    override fun save(out: DataOutput, value: ByteArray) {
-        out.writeInt(value.size())
-        out.write(value)
+private object ProtoMapValueExternalizer : DataExternalizer<ProtoMapValue> {
+    override fun save(out: DataOutput, value: ProtoMapValue) {
+        out.writeBoolean(value.isPackageFacade)
+        out.writeInt(value.bytes.size())
+        out.write(value.bytes)
     }
 
-    override fun read(`in`: DataInput): ByteArray {
+    override fun read(`in`: DataInput): ProtoMapValue {
+        val isPackageFacade = `in`.readBoolean()
         val length = `in`.readInt()
         val buf = ByteArray(length)
         `in`.readFully(buf)
-        return buf
+        return ProtoMapValue(isPackageFacade, buf)
     }
 }
 
