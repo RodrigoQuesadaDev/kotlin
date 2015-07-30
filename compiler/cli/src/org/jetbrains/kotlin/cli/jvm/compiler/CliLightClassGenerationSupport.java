@@ -197,12 +197,37 @@ public class CliLightClassGenerationSupport extends LightClassGenerationSupport 
     public Collection<PsiClass> getPackageClasses(@NotNull FqName packageFqName, @NotNull GlobalSearchScope scope) {
         Collection<JetFile> filesInPackage = findFilesForPackage(packageFqName, scope);
 
-        List<JetFile> filesWithCallables = PackagePartClassUtils.getPackageFilesWithCallables(filesInPackage);
+        List<JetFile> filesWithCallables = PackagePartClassUtils.getFilesWithCallables(filesInPackage);
         if (filesWithCallables.isEmpty()) return Collections.emptyList();
 
         //noinspection RedundantTypeArguments
         return UtilsPackage.<PsiClass>emptyOrSingletonList(
                 KotlinLightClassForFacade.Factory.createForPackageFacade(psiManager, packageFqName, scope, filesWithCallables));
+    }
+
+    @NotNull
+    @Override
+    public Collection<PsiClass> getFacadeClasses(@NotNull FqName facadeFqName, @NotNull GlobalSearchScope scope) {
+        Collection<JetFile> filesInPackage = findFilesForPackage(facadeFqName.parent(), scope);
+        List<JetFile> filesForFacade = PackagePartClassUtils.getFilesForFacade(facadeFqName, filesInPackage);
+        if (filesForFacade.isEmpty()) return Collections.emptyList();
+
+        //noinspection RedundantTypeArguments
+        return UtilsPackage.<PsiClass>emptyOrSingletonList(
+                KotlinLightClassForFacade.Factory.createForFacade(psiManager, facadeFqName, scope, filesForFacade));
+    }
+
+    @NotNull
+    @Override
+    public Collection<JetFile> findFilesForFacade(@NotNull FqName facadeFqName, @NotNull GlobalSearchScope scope) {
+        Collection<JetFile> filesInPackage = findFilesForPackage(facadeFqName.parent(), scope);
+        return PackagePartClassUtils.getFilesForFacade(facadeFqName, filesInPackage);
+    }
+
+    @NotNull
+    @Override
+    public LightClassConstructionContext getContextForFacade(@NotNull Collection<JetFile> files) {
+        return getContext();
     }
 
     @NotNull
