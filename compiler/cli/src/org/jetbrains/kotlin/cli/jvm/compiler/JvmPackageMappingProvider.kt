@@ -16,9 +16,32 @@
 
 package org.jetbrains.kotlin.resolve.lazy
 
-import org.jetbrains.kotlin.cli.jvm.compiler.JavaRoot
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider
+import org.jetbrains.kotlin.load.kotlin.ModuleMapping
 
-public class JvmPackageMappingProvider(roots: List<JavaRoot>) : PackageMappingProvider {
+public class JvmPackageMappingProvider(val env: KotlinCoreEnvironment) : PackageMappingProvider {
+    override fun findPackageMembers(packageName: String): List<String> {
+        val res = env.configuration.getList(CommonConfigurationKeys.CONTENT_ROOTS).
+                filterIsInstance<JvmClasspathRoot>().
+                map {
+                    env.contentRootToVirtualFile(it);
+                }.filterNotNull()
 
+        //TODO additional filtering by package existing
+        //val path = packageName.split("/")
+
+        val mappings = res.map {
+            it.findChild("META-INF")
+        }.filterNotNull().flatMap {
+            it.children.filter { it.name.endsWith("kotlin_module") }.toList<VirtualFile>()
+        }.map {
+            ModuleMapping(String(it.contentsToByteArray(), "UTF-8"))
+        }
+
+        return mappings.map { it.findPackageParts(packageName) }.filterNotNull().flatMap { it.parts }
+    }
 }

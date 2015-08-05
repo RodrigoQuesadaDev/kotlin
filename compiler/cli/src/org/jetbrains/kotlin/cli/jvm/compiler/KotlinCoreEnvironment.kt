@@ -190,7 +190,7 @@ public class KotlinCoreEnvironment private constructor(
         }
     }
 
-    private fun contentRootToVirtualFile(root: JvmContentRoot): VirtualFile? {
+    fun contentRootToVirtualFile(root: JvmContentRoot): VirtualFile? {
         when (root) {
             is JvmClasspathRoot -> {
                 return if (root.file.isFile()) findJarRoot(root) else findLocalDirectory(root)
