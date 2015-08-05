@@ -1,0 +1,2 @@
+changes in test/TestPackage: MEMBERS
+    [addedFun, addedVal, changedFun, changedVal, removedFun, removedVal]

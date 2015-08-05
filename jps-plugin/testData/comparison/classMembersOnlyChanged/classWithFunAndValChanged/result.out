@@ -1,0 +1,6 @@
+changes in test/ClassWithFunAdded: MEMBERS
+    [added]
+changes in test/ClassWithFunRemoved: MEMBERS
+    [removed]
+changes in test/ClassWithValAndFunAddedAndRemoved: MEMBERS
+    [funAdded, funRemoved, valAdded, valRemoved]

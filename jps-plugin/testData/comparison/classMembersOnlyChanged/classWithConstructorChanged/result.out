@@ -1,0 +1,6 @@
+changes in test/ClassWithPrimaryConstructorChanged: MEMBERS
+    [<init>]
+changes in test/ClassWithSecondaryConstructorsAdded: MEMBERS
+    [<init>]
+changes in test/ClassWithSecondaryConstructorsRemoved: MEMBERS
+    [<init>]

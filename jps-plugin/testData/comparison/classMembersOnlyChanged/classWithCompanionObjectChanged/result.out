@@ -1,0 +1,6 @@
+changes in test/ClassWithAddedCompanionObject: MEMBERS
+    [Companion]
+changes in test/ClassWithChangedCompanionObject: MEMBERS
+    [FirstName, SecondName]
+changes in test/ClassWithRemovedCompanionObject: MEMBERS
+    [Companion]
