@@ -30,11 +30,19 @@ public class ModuleMapping(val moduleMapping: String) {
             miniFacades.parts.add(facade)
         }
     }
+
+    fun findPackageParts(packageName: String): PackageFacades? {
+        return package2MiniFacades[packageName]
+    }
+
+    companion object {
+        public val MAPPING_FILE_EXT: String = "kotlin_module";
+    }
 }
 
 public class PackageFacades(val internalName: String) {
 
-    val parts = hashSetOf<String>()
+    val parts = linkedSetOf<String>()
 
     fun serialize(out: Writer) {
         for (i in parts) {
