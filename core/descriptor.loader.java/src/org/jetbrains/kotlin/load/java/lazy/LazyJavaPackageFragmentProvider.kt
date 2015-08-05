@@ -30,7 +30,8 @@ import org.jetbrains.kotlin.utils.emptyOrSingletonList
 public class LazyJavaPackageFragmentProvider(
         outerContext: GlobalJavaResolverContext,
         module: ModuleDescriptor,
-        reflectionTypes: ReflectionTypes
+        reflectionTypes: ReflectionTypes,
+        packageMapper: PackageMappingProvider
 ) : PackageFragmentProvider {
 
     private val c =

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.CliLightClassGenerationSupport;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.context.ModuleContext;
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor;
+import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.name.SpecialNames;
 import org.jetbrains.kotlin.psi.JetFile;
@@ -55,7 +56,8 @@ public class LazyResolveTestUtil {
         ModuleContext moduleContext = TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(project, "test");
 
         TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegrationNoIncremental(
-                moduleContext, sourceFiles, trace, TopDownAnalysisMode.TopLevelDeclarations
+                moduleContext, sourceFiles, trace, TopDownAnalysisMode.TopLevelDeclarations,
+                PackageMappingProvider.EMPTY
         );
 
         return moduleContext.getModule();
