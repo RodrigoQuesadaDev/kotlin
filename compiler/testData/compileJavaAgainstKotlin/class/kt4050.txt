@@ -3,7 +3,7 @@ package test
 internal final enum class MyEnum : kotlin.Enum<test.MyEnum> {
     public enum entry ENTRY : test.MyEnum {
         private constructor ENTRY()
-        kotlin.deprecated(value = "") internal final /*fake_override*/ val ord: kotlin.Int
+        internal final /*fake_override*/ val ord: kotlin.Int
         public final /*fake_override*/ fun compareTo(/*0*/ test.MyEnum): kotlin.Int
         internal final /*fake_override*/ fun f(/*0*/ java.lang.Deprecated() kotlin.Int): kotlin.Unit
         public final /*fake_override*/ fun name(): kotlin.String
@@ -11,7 +11,7 @@ internal final enum class MyEnum : kotlin.Enum<test.MyEnum> {
     }
 
     private constructor MyEnum(/*0*/ kotlin.deprecated(value = "") kotlin.Int)
-    kotlin.deprecated(value = "") internal final val ord: kotlin.Int
+    internal final val ord: kotlin.Int
     public final /*fake_override*/ fun compareTo(/*0*/ test.MyEnum): kotlin.Int
     internal final fun f(/*0*/ java.lang.Deprecated() kotlin.Int): kotlin.Unit
     public final /*fake_override*/ fun name(): kotlin.String
