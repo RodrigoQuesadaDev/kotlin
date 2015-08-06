@@ -39,11 +39,17 @@ public interface Annotations : Iterable<AnnotationDescriptor> {
         }
     }
 
+    public fun findAnyAnnotation(fqName: FqName): AnnotationWithTarget? {
+        return getAllAnnotations().firstOrNull { checkAnnotationName(it.annotation, fqName) }
+    }
+
     public fun findUseSiteTargetedAnnotation(target: AnnotationUseSiteTarget, fqName: FqName): AnnotationDescriptor? {
-        return getUseSiteTargetedAnnotations(target).firstOrNull {
-            val descriptor = it.type.constructor.declarationDescriptor
-            descriptor is ClassDescriptor && fqName.toUnsafe() == DescriptorUtils.getFqName(descriptor)
-        }
+        return getUseSiteTargetedAnnotations(target).firstOrNull { checkAnnotationName(it, fqName) }
+    }
+
+    private fun checkAnnotationName(annotation: AnnotationDescriptor, fqName: FqName): Boolean {
+        val descriptor = annotation.type.constructor.declarationDescriptor
+        return descriptor is ClassDescriptor && fqName.toUnsafe() == DescriptorUtils.getFqName(descriptor)
     }
 
     // Returns both targeted and annotations without target. Annotation order is preserved.
