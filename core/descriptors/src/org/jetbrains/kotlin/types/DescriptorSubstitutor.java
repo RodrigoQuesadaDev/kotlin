@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
 import org.jetbrains.kotlin.descriptors.SourceElement;
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor;
 import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl;
+import org.jetbrains.kotlin.utils.SmartMap;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,9 +39,9 @@ public class DescriptorSubstitutor {
             @NotNull DeclarationDescriptor newContainingDeclaration,
             @NotNull @Mutable List<TypeParameterDescriptor> result
     ) {
-        Map<TypeConstructor, TypeProjection> mutableSubstitution = new HashMap<TypeConstructor, TypeProjection>();
+        Map<TypeConstructor, TypeProjection> mutableSubstitution = SmartMap.create();
 
-        Map<TypeParameterDescriptor, TypeParameterDescriptorImpl> substitutedMap = new HashMap<TypeParameterDescriptor, TypeParameterDescriptorImpl>();
+        Map<TypeParameterDescriptor, TypeParameterDescriptorImpl> substitutedMap = SmartMap.create();
         int index = 0;
         for (TypeParameterDescriptor descriptor : typeParameters) {
             TypeParameterDescriptorImpl substituted = TypeParameterDescriptorImpl.createForFurtherModification(

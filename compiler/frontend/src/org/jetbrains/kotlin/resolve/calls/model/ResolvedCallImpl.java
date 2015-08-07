@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.resolve.calls.model;
 
-import com.google.common.collect.Maps;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.kotlin.types.JetType;
 import org.jetbrains.kotlin.types.TypeProjection;
 import org.jetbrains.kotlin.types.TypeSubstitutor;
+import org.jetbrains.kotlin.utils.SmartMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,10 +79,10 @@ public class ResolvedCallImpl<D extends CallableDescriptor> implements MutableRe
     private final ExplicitReceiverKind explicitReceiverKind;
     private final TypeSubstitutor knownTypeParametersSubstitutor;
 
-    private final Map<TypeParameterDescriptor, JetType> typeArguments = Maps.newLinkedHashMap();
-    private final Map<ValueParameterDescriptor, ResolvedValueArgument> valueArguments = Maps.newLinkedHashMap();
+    private final Map<TypeParameterDescriptor, JetType> typeArguments = SmartMap.create();
+    private final Map<ValueParameterDescriptor, ResolvedValueArgument> valueArguments = SmartMap.create();
     private final MutableDataFlowInfoForArguments dataFlowInfoForArguments;
-    private final Map<ValueArgument, ArgumentMatchImpl> argumentToParameterMap = Maps.newHashMap();
+    private final Map<ValueArgument, ArgumentMatchImpl> argumentToParameterMap = SmartMap.create();
 
     private DelegatingBindingTrace trace;
     private TracingStrategy tracing;
@@ -168,12 +168,12 @@ public class ResolvedCallImpl<D extends CallableDescriptor> implements MutableRe
             }
         }
 
-        Map<ValueParameterDescriptor, ValueParameterDescriptor> substitutedParametersMap = Maps.newHashMap();
+        Map<ValueParameterDescriptor, ValueParameterDescriptor> substitutedParametersMap = SmartMap.create();
         for (ValueParameterDescriptor valueParameterDescriptor : resultingDescriptor.getValueParameters()) {
             substitutedParametersMap.put(valueParameterDescriptor.getOriginal(), valueParameterDescriptor);
         }
 
-        Map<ValueParameterDescriptor, ResolvedValueArgument> originalValueArguments = Maps.newLinkedHashMap(valueArguments);
+        Map<ValueParameterDescriptor, ResolvedValueArgument> originalValueArguments = SmartMap.create(valueArguments);
         valueArguments.clear();
         for (Map.Entry<ValueParameterDescriptor, ResolvedValueArgument> entry : originalValueArguments.entrySet()) {
             ValueParameterDescriptor substitutedVersion = substitutedParametersMap.get(entry.getKey().getOriginal());
@@ -181,7 +181,7 @@ public class ResolvedCallImpl<D extends CallableDescriptor> implements MutableRe
             valueArguments.put(substitutedVersion, entry.getValue());
         }
 
-        Map<ValueArgument, ArgumentMatchImpl> originalArgumentToParameterMap = Maps.newLinkedHashMap(argumentToParameterMap);
+        Map<ValueArgument, ArgumentMatchImpl> originalArgumentToParameterMap = SmartMap.create(argumentToParameterMap);
         argumentToParameterMap.clear();
         for (Map.Entry<ValueArgument, ArgumentMatchImpl> entry : originalArgumentToParameterMap.entrySet()) {
             ArgumentMatchImpl argumentMatch = entry.getValue();
@@ -254,9 +254,8 @@ public class ResolvedCallImpl<D extends CallableDescriptor> implements MutableRe
             }
         }
 
-        for (int i = 0; i < arguments.size(); i++) {
-            Object o = arguments.get(i);
-            if (o == null) {
+        for (ResolvedValueArgument argument : arguments) {
+            if (argument == null) {
                 return null;
             }
         }

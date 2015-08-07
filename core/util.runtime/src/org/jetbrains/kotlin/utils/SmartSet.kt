@@ -81,27 +81,27 @@ public class SmartSet<T> : AbstractSet<T>() {
         size < ARRAY_THRESHOLD -> o in obj as Array<T>
         else -> o in obj as Set<T>
     }
+}
 
-    private object EmptyIterator : MutableIterator<Nothing?> {
-        override fun next(): Nothing? = throw NoSuchElementException()
+internal object EmptyIterator : MutableIterator<Nothing?> {
+    override fun next(): Nothing? = throw NoSuchElementException()
 
-        override fun hasNext(): Boolean = false
+    override fun hasNext(): Boolean = false
 
-        override fun remove(): Unit = throw IllegalStateException("The collection is empty.")
-    }
+    override fun remove(): Unit = throw IllegalStateException("The collection is empty.")
+}
 
-    private class SingletonIterator<T>(private val element: T) : MutableIterator<T> {
-        private var finished = false
+internal class SingletonIterator<T>(private val element: T) : MutableIterator<T> {
+    private var finished = false
 
-        override fun next(): T =
-                if (finished) throw NoSuchElementException()
-                else {
-                    finished = true
-                    element
-                }
+    override fun next(): T =
+            if (finished) throw NoSuchElementException()
+            else {
+                finished = true
+                element
+            }
 
-        override fun hasNext(): Boolean = !finished
+    override fun hasNext(): Boolean = !finished
 
-        override fun remove(): Unit = throw UnsupportedOperationException("This iterator does not support 'remove()'.")
-    }
+    override fun remove(): Unit = throw UnsupportedOperationException("This iterator does not support 'remove()'.")
 }

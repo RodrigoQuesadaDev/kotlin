@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.utils.Printer
+import org.jetbrains.kotlin.utils.SmartMap
 import org.jetbrains.kotlin.utils.newHashSetWithExpectedSize
-import java.util.HashMap
 
 public class SubstitutingScope(private val workerScope: JetScope, private val substitutor: TypeSubstitutor) : JetScope {
 
@@ -39,7 +39,7 @@ public class SubstitutingScope(private val workerScope: JetScope, private val su
         if (substitutor.isEmpty()) return descriptor
 
         if (substitutedDescriptors == null) {
-            substitutedDescriptors = HashMap<DeclarationDescriptor, DeclarationDescriptor?>()
+            substitutedDescriptors = SmartMap.create()
         }
 
         val substituted = substitutedDescriptors!!.getOrPut(descriptor, { descriptor.substitute(substitutor) })
