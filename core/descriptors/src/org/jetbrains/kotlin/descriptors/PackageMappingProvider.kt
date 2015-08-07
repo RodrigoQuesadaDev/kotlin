@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-//package org.jetbrains.kotlin.load.java.lazy
+package org.jetbrains.kotlin.load.java.lazy
 
-//interface PackageMappingProvider {
-//
-//    fun findPackageMembers(packageName: String): List<String>
-//
-//    companion object {
-//        val EMPTY = object : PackageMappingProvider {
-//            override fun findPackageMembers(packageName: String): List<String> {
-//                return emptyList()
-//            }
-//        }
-//    }
-//}
+interface PackageMappingProvider {
+
+    fun findPackageMembers(packageName: String): List<String>
+
+    companion object {
+        val EMPTY = object : PackageMappingProvider {
+            override fun findPackageMembers(packageName: String): List<String> {
+                return emptyList()
+            }
+        }
+    }
+}

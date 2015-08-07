@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.resolve.jvm
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.context.ModuleContext
@@ -53,7 +54,9 @@ public object JvmAnalyzerFacade : AnalyzerFacade<JvmResolverForModule, JvmPlatfo
             moduleDescriptor: ModuleDescriptorImpl,
             moduleContext: ModuleContext,
             moduleContent: ModuleContent,
-            platformParameters: JvmPlatformParameters, resolverForProject: ResolverForProject<M, JvmResolverForModule>
+            platformParameters: JvmPlatformParameters,
+            resolverForProject: ResolverForProject<M, JvmResolverForModule>,
+            packageMappingProvider: PackageMappingProvider
     ): JvmResolverForModule {
         val (syntheticFiles, moduleContentScope) = moduleContent
         val project = moduleContext.project
@@ -73,7 +76,7 @@ public object JvmAnalyzerFacade : AnalyzerFacade<JvmResolverForModule, JvmPlatfo
                 declarationProviderFactory,
                 moduleContentScope,
                 moduleClassResolver,
-                PackageMappingProvider.EMPTY
+                packageMappingProvider
         )
 
         val providersForModule = listOf(resolveSession.getPackageFragmentProvider(), javaDescriptorResolver.packageFragmentProvider)
