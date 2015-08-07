@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.Call;
 import org.jetbrains.kotlin.psi.ValueArgument;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
+import org.jetbrains.kotlin.utils.SmartMap;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +45,7 @@ public class DataFlowInfoForArgumentsImpl implements MutableDataFlowInfoForArgum
             ValueArgument argument = iterator.next();
             if (prev != null) {
                 if (nextArgument == null) {
-                    nextArgument = new HashMap<ValueArgument, ValueArgument>();
+                    nextArgument = SmartMap.create();
                 }
                 nextArgument.put(prev, argument);
             }
@@ -74,7 +74,7 @@ public class DataFlowInfoForArgumentsImpl implements MutableDataFlowInfoForArgum
         ValueArgument next = nextArgument == null ? null : nextArgument.get(valueArgument);
         if (next != null) {
             if (infoMap == null) {
-                infoMap = new HashMap<ValueArgument, DataFlowInfo>();
+                infoMap = SmartMap.create();
             }
             infoMap.put(next, dataFlowInfo);
             return;
