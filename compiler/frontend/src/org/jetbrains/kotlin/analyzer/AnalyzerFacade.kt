@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.LazyModuleDependencies
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
+import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.JetFile
@@ -126,7 +127,8 @@ public interface AnalyzerFacade<A : ResolverForModule, in P : PlatformAnalysisPa
             modules: Collection<M>,
             modulesContent: (M) -> ModuleContent,
             platformParameters: P,
-            delegateResolver: ResolverForProject<M, A> = EmptyResolverForProject()
+            delegateResolver: ResolverForProject<M, A> = EmptyResolverForProject(),
+            packageMappingProviderFactory: (M, ModuleContent) -> PackageMappingProvider = { (m, c) -> PackageMappingProvider.EMPTY }
     ): ResolverForProject<M, A> {
 
         val storageManager = projectContext.storageManager
@@ -180,9 +182,11 @@ public interface AnalyzerFacade<A : ResolverForModule, in P : PlatformAnalysisPa
                 module ->
                 val descriptor = resolverForProject.descriptorForModule(module)
                 val computeResolverForModule = storageManager.createLazyValue {
+                    val content = modulesContent(module)
                     createResolverForModule(
                             module, descriptor, projectContext.withModule(descriptor),
-                            modulesContent(module), platformParameters, resolverForProject
+                            content, platformParameters, resolverForProject,
+                            packageMappingProviderFactory(module, content)
                     )
                 }
 
@@ -200,7 +204,9 @@ public interface AnalyzerFacade<A : ResolverForModule, in P : PlatformAnalysisPa
             moduleDescriptor: ModuleDescriptorImpl,
             moduleContext: ModuleContext,
             moduleContent: ModuleContent,
-            platformParameters: P, resolverForProject: ResolverForProject<M, A>
+            platformParameters: P,
+            resolverForProject: ResolverForProject<M, A>,
+            packageMappingProvider: PackageMappingProvider
     ): A
 
     public val moduleParameters: ModuleParameters

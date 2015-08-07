@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.frontend.di.createLazyResolveSession
 import org.jetbrains.kotlin.idea.framework.KotlinJavaScriptLibraryDetectionUtil
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS
 import org.jetbrains.kotlin.js.resolve.JsPlatform
+import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider
 import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
@@ -48,7 +49,9 @@ public object JsAnalyzerFacade : AnalyzerFacade<JsResolverForModule, PlatformAna
             moduleDescriptor: ModuleDescriptorImpl,
             moduleContext: ModuleContext,
             moduleContent: ModuleContent,
-            platformParameters: PlatformAnalysisParameters, resolverForProject: ResolverForProject<M, JsResolverForModule>
+            platformParameters: PlatformAnalysisParameters,
+            resolverForProject: ResolverForProject<M, JsResolverForModule>,
+            packageMappingProvider: PackageMappingProvider
     ): JsResolverForModule {
         val (syntheticFiles, moduleContentScope) = moduleContent
         val project = moduleContext.project

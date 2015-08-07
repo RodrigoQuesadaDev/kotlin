@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoots
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.JetFile
