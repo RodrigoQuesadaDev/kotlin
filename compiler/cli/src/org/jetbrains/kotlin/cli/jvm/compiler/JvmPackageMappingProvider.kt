@@ -37,7 +37,7 @@ public class JvmPackageMappingProvider(val env: KotlinCoreEnvironment) : Package
         val mappings = res.map {
             it.findChild("META-INF")
         }.filterNotNull().flatMap {
-            it.children.filter { it.name.endsWith("kotlin_module") }.toList<VirtualFile>()
+            it.children.filter { it.name.endsWith(ModuleMapping.MAPPING_FILE_EXT) }.toList<VirtualFile>()
         }.map {
             ModuleMapping(String(it.contentsToByteArray(), "UTF-8"))
         }

@@ -34,6 +34,10 @@ public class ModuleMapping(val moduleMapping: String) {
     fun findPackageParts(packageName: String): PackageFacades? {
         return package2MiniFacades[packageName]
     }
+
+    companion object {
+        public val MAPPING_FILE_EXT: String = "kotlin_module";
+    }
 }
 
 public class PackageFacades(val internalName: String) {

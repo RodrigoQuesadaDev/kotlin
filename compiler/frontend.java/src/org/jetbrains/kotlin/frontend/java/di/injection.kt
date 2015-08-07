@@ -73,10 +73,9 @@ public fun StorageComponentContainer.configureJavaTopDownAnalysis(moduleContentS
 
 public fun createContainerForLazyResolveWithJava(
         moduleContext: ModuleContext, bindingTrace: BindingTrace, declarationProviderFactory: DeclarationProviderFactory,
-        moduleContentScope: GlobalSearchScope, moduleClassResolver: ModuleClassResolver
+        moduleContentScope: GlobalSearchScope, moduleClassResolver: ModuleClassResolver, packageMappingProvider: PackageMappingProvider
 ): Pair<ResolveSession, JavaDescriptorResolver> = createContainer("LazyResolveWithJava") {
-    //TODO: idea specific code
-    useInstance(PackageMappingProvider.EMPTY)
+    useInstance(packageMappingProvider)
     configureModule(moduleContext, JvmPlatform, bindingTrace)
     configureJavaTopDownAnalysis(moduleContentScope, moduleContext.project, LookupTracker.DO_NOTHING)
 
