@@ -51,8 +51,14 @@ public class LazyJavaPackageScope(
         val kotlinBinaryClass = kotlinBinaryClass
         if (kotlinBinaryClass == null)
             JetScope.Empty
-        else
-            c.deserializedDescriptorResolver.createKotlinPackageScope(packageFragment, kotlinBinaryClass) ?: JetScope.Empty
+        else {
+            val pakage = jPackage.getFqName().asString()
+            val files = containingDeclaration.packageMapper.findPackageMembers(pakage.replace("\\.", "/"))
+            println("package:" + pakage)
+            println(files.join())
+            val jetScope = c.deserializedDescriptorResolver.createKotlinPackageScope(packageFragment, kotlinBinaryClass) ?: JetScope.Empty
+            jetScope
+        }
     }
 
     private val packageFragment: LazyJavaPackageFragment get() = getContainingDeclaration() as LazyJavaPackageFragment
