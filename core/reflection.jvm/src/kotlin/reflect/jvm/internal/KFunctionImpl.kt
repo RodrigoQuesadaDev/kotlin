@@ -62,7 +62,7 @@ open class KFunctionImpl protected constructor(
             is BuiltInFunction -> jvmSignature.getMember(container)
         }
 
-        val result = when (member) {
+        val result: FunctionCaller<*> = when (member) {
             is Constructor<*> -> FunctionCaller.Constructor(member)
             is Method -> when {
                 !Modifier.isStatic(member.modifiers) -> FunctionCaller.InstanceMethod(member)
