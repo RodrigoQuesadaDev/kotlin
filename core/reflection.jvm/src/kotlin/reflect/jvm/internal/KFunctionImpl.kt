@@ -62,7 +62,7 @@ open class KFunctionImpl protected constructor(
             is BuiltInFunction -> jvmSignature.getMember(container)
         }
 
-        when (member) {
+        val result = when (member) {
             is Constructor<*> -> FunctionCaller.Constructor(member)
             is Method -> when {
                 !Modifier.isStatic(member.modifiers) -> FunctionCaller.InstanceMethod(member)
@@ -71,6 +71,7 @@ open class KFunctionImpl protected constructor(
             }
             else -> throw KotlinReflectionInternalError("Call is not yet supported for this function: $descriptor")
         }
+        result
     }
 
     override fun getArity(): Int {
