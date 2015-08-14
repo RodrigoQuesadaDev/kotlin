@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.types.TypesPackage;
 import org.jetbrains.kotlin.types.Variance;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 import static org.jetbrains.kotlin.types.Variance.*;
@@ -219,18 +218,14 @@ public class TypeCheckingProcedure {
 
     // Returns true if it's no upper bounds or the only upper bound is Any?
     private static boolean parameterHasNoUpperBounds(@NotNull TypeParameterDescriptor parameter) {
-        Set<JetType> upperBounds = parameter.getUpperBounds();
-        if (upperBounds.isEmpty()) return true;
-        for (JetType upperBound: upperBounds) {
+        for (JetType upperBound: parameter.getUpperBounds()) {
             if (!KotlinBuiltIns.isNullableAny(upperBound)) return false;
         }
         return true;
     }
 
     private static boolean parameterHasFlexibleUpperBound(@NotNull TypeParameterDescriptor parameter) {
-        Set<JetType> upperBounds = parameter.getUpperBounds();
-        if (upperBounds.isEmpty()) return false;
-        for (JetType upperBound: upperBounds) {
+        for (JetType upperBound: parameter.getUpperBounds()) {
             if (TypesPackage.isFlexible(upperBound)) {
                 return true;
             }
