@@ -18,7 +18,7 @@ internal final class E {
 
 internal final class MyWrapper : Wrapper<A> {
     public constructor MyWrapper(/*0*/ a: A)
-    protected final override /*1*/ /*fake_override*/ val t: A
+    protected/*protected and package*/ final override /*1*/ /*fake_override*/ var t: A!
     public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
     public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
     public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
@@ -38,15 +38,15 @@ kotlin.data() internal final class Pair</*0*/ out T> {
 
 internal final class TheirWrapper : Wrapper<E> {
     public constructor TheirWrapper(/*0*/ e: E)
-    protected final override /*1*/ /*fake_override*/ val t: E
+    protected/*protected and package*/ final override /*1*/ /*fake_override*/ var t: E!
     public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
     public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
     public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
 }
 
-internal abstract class Wrapper</*0*/ T : A> {
-    public constructor Wrapper</*0*/ T : A>(/*0*/ t: T)
-    protected final val t: T
+public/*package*/ abstract class Wrapper</*0*/ T : A!> {
+    public/*package*/ constructor Wrapper</*0*/ T : A!>(/*0*/ t: T!)
+    protected/*protected and package*/ final var t: T!
     public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
     public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
     public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String

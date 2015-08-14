@@ -224,9 +224,10 @@ public class TypeCheckingProcedure {
         return true;
     }
 
-    private static boolean parameterHasFlexibleUpperBound(@NotNull TypeParameterDescriptor parameter) {
+    private static boolean parameterHasRecursiveUpperBound(@NotNull TypeParameterDescriptor parameter, @NotNull TypeConstructor baseConstructor) {
         for (JetType upperBound: parameter.getUpperBounds()) {
-            if (TypesPackage.isFlexible(upperBound)) {
+            // TODO: also check deeper recursion
+            if (baseConstructor.equals(upperBound.getConstructor())) {
                 return true;
             }
         }
@@ -251,7 +252,7 @@ public class TypeCheckingProcedure {
             // * is a supertype of any other type iff type parameter T has no upper bounds
             // For a parameter with a flexible upper bound we suggest that * is a supertype to avoid risk of recursion
             if (superArgument.isStarProjection() &&
-                (subArgument.isStarProjection() || parameterHasNoUpperBounds(parameter) || parameterHasFlexibleUpperBound(parameter))) {
+                (subArgument.isStarProjection() || parameterHasNoUpperBounds(parameter) || parameterHasRecursiveUpperBound(parameter, constructor))) {
                 continue;
             }
 
