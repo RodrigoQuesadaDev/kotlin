@@ -15,6 +15,6 @@ fun foo(): String {
     val matrix: Pair<Wrapper<*>>
     // It's not legal to do such a thing because E is not derived from A
     // But we should not have assertion errors because of it!
-    matrix = Pair(MyWrapper(A()), TheirWrapper(E()))
+    matrix = <!TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH!>Pair<!>(MyWrapper(A()), TheirWrapper(E()))
     return matrix.toString()
 }

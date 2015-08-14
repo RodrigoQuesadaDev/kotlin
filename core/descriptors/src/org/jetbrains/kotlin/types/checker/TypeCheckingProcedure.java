@@ -20,9 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor;
-import org.jetbrains.kotlin.types.*;
+import org.jetbrains.kotlin.types.JetType;
+import org.jetbrains.kotlin.types.TypeConstructor;
+import org.jetbrains.kotlin.types.TypeProjection;
+import org.jetbrains.kotlin.types.TypeUtils;
+import org.jetbrains.kotlin.types.TypesPackage;
+import org.jetbrains.kotlin.types.Variance;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage.getBuiltIns;
 import static org.jetbrains.kotlin.types.Variance.*;
@@ -211,6 +217,27 @@ public class TypeCheckingProcedure {
         return checkSubtypeForTheSameConstructor(closestSupertype, supertype);
     }
 
+    // Returns true if it's no upper bounds or the only upper bound is Any?
+    private static boolean parameterHasNoUpperBounds(@NotNull TypeParameterDescriptor parameter) {
+        Set<JetType> upperBounds = parameter.getUpperBounds();
+        if (upperBounds.isEmpty()) return true;
+        for (JetType upperBound: upperBounds) {
+            if (!KotlinBuiltIns.isNullableAny(upperBound)) return false;
+        }
+        return true;
+    }
+
+    private static boolean parameterHasFlexibleUpperBound(@NotNull TypeParameterDescriptor parameter) {
+        Set<JetType> upperBounds = parameter.getUpperBounds();
+        if (upperBounds.isEmpty()) return false;
+        for (JetType upperBound: upperBounds) {
+            if (TypesPackage.isFlexible(upperBound)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean checkSubtypeForTheSameConstructor(@NotNull JetType subtype, @NotNull JetType supertype) {
         TypeConstructor constructor = subtype.getConstructor();
         assert constraints.assertEqualTypeConstructors(constructor, supertype.getConstructor()) : constructor + " is not " + supertype.getConstructor();
@@ -224,12 +251,18 @@ public class TypeCheckingProcedure {
             TypeParameterDescriptor parameter = parameters.get(i);
 
             TypeProjection superArgument = superArguments.get(i);
-            if (superArgument.isStarProjection()) continue;
+            TypeProjection subArgument = subArguments.get(i);
+            // * is a subtype of another *
+            // * is a supertype of any other type iff type parameter T has no upper bounds
+            // For a parameter with a flexible upper bound we suggest that * is a supertype to avoid risk of recursion
+            if (superArgument.isStarProjection() &&
+                (subArgument.isStarProjection() || parameterHasNoUpperBounds(parameter) || parameterHasFlexibleUpperBound(parameter))) {
+                continue;
+            }
 
             JetType superIn = getInType(parameter, superArgument);
             JetType superOut = getOutType(parameter, superArgument);
 
-            TypeProjection subArgument = subArguments.get(i);
             JetType subIn = getInType(parameter, subArgument);
             JetType subOut = getOutType(parameter, subArgument);
 

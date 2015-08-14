@@ -241,8 +241,7 @@ public class TypeUtils {
             // TODO: e.g. among {Int, Int?, Int!}, return `Int` (now it returns `Int!`).
             JetType bestRepresentative = TypesPackage.singleBestRepresentative(nullabilityStripped);
             if (bestRepresentative == null) {
-                // See KT-7585: possibly it's a type error but definitely not an assertion
-                return null;
+                throw new AssertionError("Empty intersection for types " + types);
             }
             return makeNullableAsSpecified(bestRepresentative, allNullable);
         }
