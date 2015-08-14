@@ -28,7 +28,8 @@ abstract class AbstractLookupTrackerTest : AbstractIncrementalJpsTest(
         allowNoFilesWithSuffixInTestData = true,
         allowNoBuildLogFileInTestData = true
 ) {
-    val MULTILINE_COMMENT = "/\\*[^\\*]*\\*/".toRegex()
+    // ignores KDoc comments which starts with `/**`, example: /** text */
+    val MULTILINE_COMMENT = "/\\*[^*][^\\*]*\\*/".toRegex()
 
     override fun createLookupTracker() = TestLookupTracker()
 
