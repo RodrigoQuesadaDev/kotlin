@@ -4,7 +4,7 @@ interface Base {}
 
 // FILE: Derived.java
 
-final class Derived implements Base {}
+final class Derived<T> implements Base {}
 
 // FILE: Exotic.java
 
@@ -44,13 +44,13 @@ class Properties {
 
 open class Wrapper<out T: Base>(val v: T)
 
-class DerivedWrapper(v: Derived): Wrapper<Derived>(v)
+class DerivedWrapper(v: Derived<*>): Wrapper<Derived<*>>(v)
 
 class ExoticWrapper(v: Exotic): Wrapper<Exotic>(v)
 
 object MyBase {
 
-    fun derived() = Derived()
+    fun derived() = Derived<String>()
     fun exotic(x: Int) = Exotic(x)
 
     fun derivedWrapper() = DerivedWrapper(derived())

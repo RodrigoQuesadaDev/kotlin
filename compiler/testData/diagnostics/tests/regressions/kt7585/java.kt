@@ -2,11 +2,17 @@
 
 class A {}
 
+// FILE: Wrapper.java
+
+abstract class Wrapper<T extends A> {
+    protected T t;
+
+    Wrapper(T t) { this.t = t; }
+}
+
 // FILE: kt7585.kt
 
 class E
-
-abstract class Wrapper<T: A>(protected val t: T)
 
 class MyWrapper(a: A): Wrapper<A>(a)
 
