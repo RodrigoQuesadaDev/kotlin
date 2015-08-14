@@ -11519,6 +11519,27 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/regressions/WrongTraceInCallResolver.kt");
                 doTest(fileName);
             }
+
+            @TestMetadata("compiler/testData/diagnostics/tests/regressions/kt7585")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Kt7585 extends AbstractJetDiagnosticsTest {
+                public void testAllFilesPresentInKt7585() throws Exception {
+                    JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/diagnostics/tests/regressions/kt7585"), Pattern.compile("^(.+)\\.kt$"), true);
+                }
+
+                @TestMetadata("base.kt")
+                public void testBase() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/regressions/kt7585/base.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("java.kt")
+                public void testJava() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/regressions/kt7585/java.kt");
+                    doTest(fileName);
+                }
+            }
         }
 
         @TestMetadata("compiler/testData/diagnostics/tests/resolve")
@@ -12813,18 +12834,6 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
             @TestMetadata("kt7561.kt")
             public void testKt7561() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/kt7561.kt");
-                doTest(fileName);
-            }
-
-            @TestMetadata("kt7585.kt")
-            public void testKt7585() throws Exception {
-                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/kt7585.kt");
-                doTest(fileName);
-            }
-
-            @TestMetadata("kt7585java.kt")
-            public void testKt7585java() throws Exception {
-                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/kt7585java.kt");
                 doTest(fileName);
             }
 
