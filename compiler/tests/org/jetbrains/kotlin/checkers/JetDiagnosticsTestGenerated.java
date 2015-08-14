@@ -11534,6 +11534,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                     doTest(fileName);
                 }
 
+                @TestMetadata("deepRecursive.kt")
+                public void testDeepRecursive() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/regressions/kt7585/deepRecursive.kt");
+                    doTest(fileName);
+                }
+
                 @TestMetadata("java.kt")
                 public void testJava() throws Exception {
                     String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/regressions/kt7585/java.kt");
