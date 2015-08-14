@@ -66,9 +66,8 @@ open class KFunctionImpl protected constructor(
             is Constructor<*> -> FunctionCaller.Constructor(member)
             is Method -> when {
                 !Modifier.isStatic(member.modifiers) -> FunctionCaller.InstanceMethod(member)
-
-                descriptor.annotations.findAnnotation(PLATFORM_STATIC) != null,
-                descriptor.annotations.findAnnotation(JVM_STATIC) != null->
+                descriptor.annotations.findAnyAnnotation(PLATFORM_STATIC) != null,
+                descriptor.annotations.findAnyAnnotation(JVM_STATIC) != null->
                     FunctionCaller.PlatformStaticInObject(member)
 
                 else -> FunctionCaller.StaticMethod(member)
