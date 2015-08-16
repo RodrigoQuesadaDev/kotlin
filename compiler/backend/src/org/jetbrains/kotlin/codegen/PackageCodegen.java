@@ -120,7 +120,7 @@ public class PackageCodegen {
                 return v;
             }
         });
-        facades = new PackageFacades(fqName.asString());
+        facades = new PackageFacades(fqName.asString().replaceAll("\\.", "/"));
     }
 
     // Returns null if file has callables in several files
@@ -333,9 +333,10 @@ public class PackageCodegen {
             }
         }
 
-        facades.getParts().add(packagePartType.getInternalName());
 
         if (!generatePackagePart || !state.getGenerateDeclaredClassFilter().shouldGeneratePackagePart(file)) return null;
+
+        facades.getParts().add(packagePartType.getInternalName());
 
         ClassBuilder builder = state.getFactory().newVisitor(PackagePart(file, packageFragment), packagePartType, file);
 
