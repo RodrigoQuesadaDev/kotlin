@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.load.java.descriptors.SamConstructorDescriptorKindExclude
 import org.jetbrains.kotlin.load.java.lazy.KotlinClassLookupResult
 import org.jetbrains.kotlin.load.java.lazy.LazyJavaResolverContext
@@ -30,10 +31,10 @@ import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.PackageClassUtils
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import kotlin.io.println
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.JetScope
-import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 public class LazyJavaPackageScope(
@@ -47,17 +48,43 @@ public class LazyJavaPackageScope(
     public val kotlinBinaryClass: KotlinJvmBinaryClass?
             = c.components.kotlinClassFinder.findKotlinClass(PackageClassUtils.getPackageClassId(packageFragment.fqName))
 
+    public val kotlinBinaryClasses: List<KotlinJvmBinaryClass>
+    init {
+        val pakage = jPackage.getFqName().asString().replace('.', '/')
+        val files = containingDeclaration.packageMapper.findPackageMembers(pakage)
+        val packageClassId = PackageClassUtils.getPackageClassId(packageFragment.fqName).packageFqName
+        val notFound = arrayListOf<String>()
+        val classFiles = files.map {
+            val classId = ClassId(packageClassId, Name.identifierNoValidate(it.substringAfterLast("/")))
+            val findKotlinClass = c.components.kotlinClassFinder.findKotlinClass(classId)
+            if (findKotlinClass == null) {
+                notFound.add("$classId")
+            }
+            findKotlinClass
+        }
+        kotlinBinaryClasses = classFiles.filterNotNull()
+        if (kotlinBinaryClasses.size() != classFiles.size()) {
+            println("package: $pakage")
+            println("files: " + files.join())
+            println("not found: " + notFound.join())
+            //assert(kotlinBinaryClasses.size() == classFiles.size(), "${kotlinBinaryClasses.size()} != ${classFiles.size()}")
+        }
+    }
+
     private val deserializedPackageScope = c.storageManager.createLazyValue {
         val kotlinBinaryClass = kotlinBinaryClass
-        if (kotlinBinaryClass == null)
+        if (kotlinBinaryClasses.isEmpty())
             JetScope.Empty
         else {
-            val pakage = jPackage.getFqName().asString()
-            val files = containingDeclaration.packageMapper.findPackageMembers(pakage.replace("\\.", "/"))
-//            println("package:" + pakage)
-//            println(files.join())
-            val jetScope = c.components.deserializedDescriptorResolver.createKotlinPackageScope(packageFragment, kotlinBinaryClass) ?: JetScope.Empty
-            jetScope
+
+            //if(!kotlinBinaryClasses.isEmpty()) {
+                c.components.deserializedDescriptorResolver.createKotlinNewPackageScope(packageFragment, kotlinBinaryClasses)
+                //print("deserializing " + packageFragment.getName())
+            //}
+
+//            val jetScope = c.deserializedDescriptorResolver.createKotlinPackageScope(packageFragment, kotlinBinaryClass) ?: JetScope.Empty
+//            jetScope
+
         }
     }
 
