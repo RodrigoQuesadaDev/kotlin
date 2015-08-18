@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.JetBundle
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.idea.core.refactoring.canRefactor
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.containsStarProjections
 import org.jetbrains.kotlin.descriptors.ClassKind as ClassDescriptorKind
 
 private fun String.checkClassName(): Boolean = isNotEmpty() && Character.isUpperCase(first())
@@ -97,7 +98,7 @@ private fun JetExpression.getInheritableTypeInfo(
     val type = types.first()
     val descriptor = type.getConstructor().getDeclarationDescriptor() ?: return TypeInfo.Empty to { classKind -> false }
 
-    val canHaveSubtypes = TypeUtils.canHaveSubtypes(JetTypeChecker.DEFAULT, type)
+    val canHaveSubtypes = !(type.constructor.isFinal || type.containsStarProjections())
     val isEnum = DescriptorUtils.isEnumClass(descriptor)
 
     if (!(canHaveSubtypes || isEnum)
