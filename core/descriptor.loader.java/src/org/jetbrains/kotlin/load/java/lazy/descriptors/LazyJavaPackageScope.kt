@@ -50,19 +50,25 @@ public class LazyJavaPackageScope(
 
     public val kotlinBinaryClasses: List<KotlinJvmBinaryClass>
     init {
-        val pakage = jPackage.getFqName().asString()
-        val files = containingDeclaration.packageMapper.findPackageMembers(pakage.replace('.', '/'))
-//            println("package:" + pakage)
-//            println(files.join())
-//            println("pfqn ${PackageClassUtils.getPackageClassId(packageFragment.fqName)}")
+        val pakage = jPackage.getFqName().asString().replace('.', '/')
+        val files = containingDeclaration.packageMapper.findPackageMembers(pakage)
         val packageClassId = PackageClassUtils.getPackageClassId(packageFragment.fqName).packageFqName
+        val notFound = arrayListOf<String>()
         val classFiles = files.map {
             val classId = ClassId(packageClassId, Name.identifierNoValidate(it.substringAfterLast("/")))
-            println("pfqn2 $classId")
-            c.kotlinClassFinder.findKotlinClass(classId)
+            val findKotlinClass = c.kotlinClassFinder.findKotlinClass(classId)
+            if (findKotlinClass == null) {
+                notFound.add("$classId")
+            }
+            findKotlinClass
         }
         kotlinBinaryClasses = classFiles.filterNotNull()
-        assert(kotlinBinaryClasses.size() == classFiles.size(), "${kotlinBinaryClasses.size()} != ${classFiles.size()}")
+        if (kotlinBinaryClasses.size() != classFiles.size()) {
+            println("package: $pakage")
+            println("files: " + files.join())
+            println("not found: " + notFound.join())
+            assert(kotlinBinaryClasses.size() == classFiles.size(), "${kotlinBinaryClasses.size()} != ${classFiles.size()}")
+        }
     }
 
     private val deserializedPackageScope = c.storageManager.createLazyValue {
