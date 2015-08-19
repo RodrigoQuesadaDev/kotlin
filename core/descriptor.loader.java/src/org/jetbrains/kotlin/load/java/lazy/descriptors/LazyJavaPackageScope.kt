@@ -67,7 +67,7 @@ public class LazyJavaPackageScope(
             println("package: $pakage")
             println("files: " + files.join())
             println("not found: " + notFound.join())
-            assert(kotlinBinaryClasses.size() == classFiles.size(), "${kotlinBinaryClasses.size()} != ${classFiles.size()}")
+            //assert(kotlinBinaryClasses.size() == classFiles.size(), "${kotlinBinaryClasses.size()} != ${classFiles.size()}")
         }
     }
 
