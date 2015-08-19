@@ -66,7 +66,7 @@ public fun LexicalScope.getLocalVariable(name: Name, location: LookupLocation = 
     return null
 }
 
-public fun LexicalScope.getClassifier(name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): ClassifierDescriptor? {
+public fun LexicalScope.getClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? {
     processForMeAndParent {
         it.getDeclaredClassifier(name, location)?.let { return it }
     }

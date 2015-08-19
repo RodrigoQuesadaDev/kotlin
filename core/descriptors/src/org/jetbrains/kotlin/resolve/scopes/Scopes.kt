@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.resolve.scopes
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.utils.Printer
@@ -35,11 +34,11 @@ public interface LexicalScope {
 
     public fun getDeclaredDescriptors(): Collection<DeclarationDescriptor>
 
-    public fun getDeclaredClassifier(name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): ClassifierDescriptor?
+    public fun getDeclaredClassifier(name: Name, location: LookupLocation): ClassifierDescriptor?
 
     // need collection here because there may be extension property foo and usual property foo
-    public fun getDeclaredVariables(name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): Collection<VariableDescriptor>
-    public fun getDeclaredFunctions(name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): Collection<FunctionDescriptor>
+    public fun getDeclaredVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor>
+    public fun getDeclaredFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor>
 
     public fun printStructure(p: Printer)
 }
@@ -58,8 +57,8 @@ public interface FileScope: LexicalScope {
 
     fun getPackage(name: Name): PackageViewDescriptor?
 
-    public fun getSyntheticExtensionProperties(receiverTypes: Collection<JetType>, name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): Collection<PropertyDescriptor>
-    public fun getSyntheticExtensionFunctions(receiverTypes: Collection<JetType>, name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): Collection<FunctionDescriptor>
+    public fun getSyntheticExtensionProperties(receiverTypes: Collection<JetType>, name: Name, location: LookupLocation): Collection<PropertyDescriptor>
+    public fun getSyntheticExtensionFunctions(receiverTypes: Collection<JetType>, name: Name, location: LookupLocation): Collection<FunctionDescriptor>
 
     public fun getSyntheticExtensionProperties(receiverTypes: Collection<JetType>): Collection<PropertyDescriptor>
     public fun getSyntheticExtensionFunctions(receiverTypes: Collection<JetType>): Collection<FunctionDescriptor>
