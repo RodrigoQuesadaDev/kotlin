@@ -16,10 +16,8 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
-import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.JetExpression
 import org.jetbrains.kotlin.psi.JetFunctionLiteral
@@ -84,6 +82,7 @@ public fun JetScope.getImplicitReceiversWithInstanceToExpression(): Map<Receiver
     }
     return result
 }
+
 
 private fun thisQualifierName(receiver: ReceiverParameterDescriptor): Name? {
     val descriptor = receiver.getContainingDeclaration()

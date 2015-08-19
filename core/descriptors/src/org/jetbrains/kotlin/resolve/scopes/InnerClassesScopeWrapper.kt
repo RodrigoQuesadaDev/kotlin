@@ -16,21 +16,25 @@
 
 package org.jetbrains.kotlin.resolve.scopes
 
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
 
 public class InnerClassesScopeWrapper(override val workerScope: JetScope) : AbstractScopeAdapter() {
     override fun getClassifier(name: Name, location: LookupLocation) = workerScope.getClassifier(name, location) as? ClassDescriptor
 
-    override fun getDeclarationsByLabel(labelName: Name) = workerScope.getDeclarationsByLabel(labelName).filterIsInstance<ClassDescriptor>()
+    override fun getDeclarationsByLabel(labelName: Name) = emptyList<DeclarationDescriptor>()
 
     override fun getDescriptors(kindFilter: DescriptorKindFilter,
                                 nameFilter: (Name) -> Boolean): List<ClassDescriptor> {
         val restrictedFilter = kindFilter.restrictedToKindsOrNull(DescriptorKindFilter.CLASSIFIERS_MASK) ?: return listOf()
         return workerScope.getDescriptors(restrictedFilter, nameFilter).filterIsInstance<ClassDescriptor>()
     }
+
+    override fun getLocalVariable(name: Name): VariableDescriptor? = null
+
+    override fun getFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor> = emptyList()
+    override fun getProperties(name: Name, location: LookupLocation): Collection<VariableDescriptor> = emptyList()
 
     override fun getImplicitReceiversHierarchy(): List<ReceiverParameterDescriptor> = listOf()
 
