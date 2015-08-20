@@ -37,8 +37,8 @@ class IDESyntheticFileGenerator(val module: Module) : SyntheticFileGenerator(mod
 
     private val cachedJetFiles: CachedValue<List<JetFile>> by lazy {
         cachedValue {
-            val supportV4 = supportV4Available(javaPsiFacade, moduleScope)
-            Result.create(generateSyntheticJetFiles(generateSyntheticFiles(true, moduleScope, supportV4)), psiTreeChangePreprocessor)
+            val supportV4 = supportV4Available()
+            Result.create(generateSyntheticJetFiles(generateSyntheticFiles(true, supportV4)), psiTreeChangePreprocessor)
         }
     }
 
@@ -50,11 +50,11 @@ class IDESyntheticFileGenerator(val module: Module) : SyntheticFileGenerator(mod
 
     public override fun getSyntheticFiles(): List<JetFile> = cachedJetFiles.value
 
-    override fun extractLayoutResources(files: List<PsiFile>, scope: GlobalSearchScope): List<AndroidResource> {
+    override fun extractLayoutResources(files: List<PsiFile>): List<AndroidResource> {
         val widgets = arrayListOf<AndroidResource>()
         val visitor = AndroidXmlVisitor { id, widgetType, attribute ->
-            widgets += parseAndroidResource(id, widgetType) {
-                resolveFqClassNameForView(javaPsiFacade, scope, it)
+            widgets += parseAndroidResource(id, widgetType) { tag ->
+                resolveFqClassNameForView(tag)
             }
         }
 
@@ -62,4 +62,5 @@ class IDESyntheticFileGenerator(val module: Module) : SyntheticFileGenerator(mod
         return filterDuplicates(widgets)
     }
 
+    override fun checkIfClassExist(fqName: String) = javaPsiFacade.findClass(fqName, moduleScope) != null
 }
