@@ -39,37 +39,50 @@ public class AndroidPsiTreeChangePreprocessor : PsiTreeChangePreprocessor, Simpl
     }
 
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
-        if (event.getCode() in HANDLED_EVENTS) {
-            val file = event.getFile() ?: (event.getChild() as? XmlFile)
-            if (file != null) {
-                val project = file.getProject()
+        if (event.code in HANDLED_EVENTS) {
+            val child = event.child
 
-                val projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex()
-                val module = projectFileIndex.getModuleForFile(file.getVirtualFile())
-                if (module != null) {
-                    val resourceManager = AndroidLayoutXmlFileManager.getInstance(module)
-                    val resDirectories = resourceManager.getModuleResDirectories()
-                    val baseDirectory = file.getParent()?.getParent()?.getVirtualFile()
+            if (child is PsiFile && checkIfLayoutFile(child)) {
+                incModificationCount()
+                return
+            }
 
-                    // File from the res/ directory was modified
-                    if (baseDirectory in resDirectories && file.isLayoutXmlFile()) {
-                        incModificationCount()
-                    }
-                }
+            val file = event.file ?: return
+            if (!checkIfLayoutFile(file)) return
+
+            incModificationCount()
+        }
+    }
+
+    private fun checkIfLayoutFile(file: PsiFile): Boolean {
+        val xmlFile = file as? XmlFile ?: return false
+
+        val projectFileIndex = ProjectRootManager.getInstance(xmlFile.project).fileIndex
+        val module = projectFileIndex.getModuleForFile(xmlFile.virtualFile)
+
+        if (module != null) {
+            val resourceManager = AndroidLayoutXmlFileManager.getInstance(module)
+            val resDirectories = resourceManager.getModuleResDirectories()
+            val baseDirectory = xmlFile.parent?.parent?.virtualFile
+
+            if (baseDirectory in resDirectories && xmlFile.isLayoutXmlFile()) {
+                return true
             }
         }
+
+        return false
     }
 
     private fun AndroidLayoutXmlFileManager.getModuleResDirectories(): List<VirtualFile> {
         val info = androidModuleInfo ?: return listOf()
 
         val fileManager = VirtualFileManager.getInstance()
-        return info.resDirectories.map { fileManager.findFileByUrl("file://" + it)!! }
+        return info.resDirectories.map { fileManager.findFileByUrl("file://$it") }.filterNotNull()
     }
 
     private fun PsiFile.isLayoutXmlFile(): Boolean {
-        if (getFileType() != XmlFileType.INSTANCE) return false
-        return getParent()?.getName()?.startsWith("layout") ?: false
+        if (fileType != XmlFileType.INSTANCE) return false
+        return parent?.name?.startsWith("layout") ?: false
     }
 
 }
