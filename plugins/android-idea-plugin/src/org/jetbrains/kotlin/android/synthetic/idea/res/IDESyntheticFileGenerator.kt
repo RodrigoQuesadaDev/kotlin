@@ -23,6 +23,7 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
+import org.jetbrains.kotlin.android.synthetic.AndroidConst
 import org.jetbrains.kotlin.android.synthetic.idea.AndroidPsiTreeChangePreprocessor
 import org.jetbrains.kotlin.android.synthetic.idea.AndroidXmlVisitor
 import org.jetbrains.kotlin.android.synthetic.parseAndroidResource
@@ -48,7 +49,10 @@ class IDESyntheticFileGenerator(val module: Module) : SyntheticFileGenerator(mod
         module.project.getExtensions(PsiTreeChangePreprocessor.EP_NAME).first { it is AndroidPsiTreeChangePreprocessor }
     }
 
-    public override fun getSyntheticFiles(): List<JetFile> = cachedJetFiles.value
+    public override fun getSyntheticFiles(): List<JetFile> {
+        if (!checkIfClassExist(AndroidConst.VIEW_FQNAME)) return listOf()
+        return cachedJetFiles.value
+    }
 
     override fun extractLayoutResources(files: List<PsiFile>): List<AndroidResource> {
         val widgets = arrayListOf<AndroidResource>()
