@@ -89,7 +89,7 @@ public class JvmResolveUtil {
             @NotNull Collection<JetFile> files,
             @NotNull KotlinCoreEnvironment environment
     ) {
-        return analyzeFilesWithJavaIntegration(project, files, environment);
+        return analyzeFilesWithJavaIntegration(project, files, new JvmPackageMappingProvider(environment));
     }
 
     @NotNull
