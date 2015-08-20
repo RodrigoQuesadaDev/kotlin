@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analyzer.AnalysisResult;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.Progress;
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink;
+import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider;
 import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.resolve.lazy.JvmResolveUtil;
 
@@ -46,8 +47,14 @@ public class GenerationUtils {
 
     @NotNull
     public static GenerationState compileManyFilesGetGenerationStateForTest(@NotNull Project project, @NotNull List<JetFile> files) {
+        return compileManyFilesGetGenerationStateForTest(project, files, PackageMappingProvider.EMPTY);
+    }
+
+    @NotNull
+    public static GenerationState compileManyFilesGetGenerationStateForTest(@NotNull Project project, @NotNull List<JetFile> files,
+            @NotNull PackageMappingProvider packageMappingProvider) {
         AnalysisResult analysisResult = JvmResolveUtil.analyzeFilesWithJavaIntegrationAndCheckForErrors(
-                project, files);
+                project, files, packageMappingProvider);
         return compileFilesGetGenerationState(project, analysisResult, files);
     }
 
