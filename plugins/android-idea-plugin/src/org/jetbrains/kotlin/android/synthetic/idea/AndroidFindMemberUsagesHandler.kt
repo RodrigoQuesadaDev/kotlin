@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.android.synthetic.isAndroidSyntheticElement
 import org.jetbrains.kotlin.android.synthetic.res.SyntheticFileGenerator
 import org.jetbrains.kotlin.idea.caches.resolve.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.resolve.getModuleInfo
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.plugin.findUsages.handlers.KotlinFindUsagesHandlerDecorator
 import org.jetbrains.kotlin.psi.JetNamedDeclaration
 import org.jetbrains.kotlin.psi.JetProperty
@@ -97,12 +96,17 @@ class AndroidFindMemberUsagesHandler(
     override fun processElementUsages(element: PsiElement, processor: Processor<UsageInfo>, options: FindUsagesOptions): Boolean {
         assert(isAndroidSyntheticElement(declaration))
 
-        val findUsagesOptions = JavaVariableFindUsagesOptions(element.project)
+        val findUsagesOptions = JavaVariableFindUsagesOptions(runReadAction { element.project })
         findUsagesOptions.isSearchForTextOccurrences = false
         findUsagesOptions.isSkipImportStatements = true
         findUsagesOptions.isUsages = true
         findUsagesOptions.isReadAccess = true
         findUsagesOptions.isWriteAccess = true
         return super.processElementUsages(element, processor, findUsagesOptions)
+    }
+
+    // Android extensions plugin has it's own runtime -> different function classes
+    private fun runReadAction<T>(action: () -> T): T {
+        return ApplicationManager.getApplication().runReadAction<T>(action)
     }
 }
