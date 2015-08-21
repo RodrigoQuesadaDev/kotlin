@@ -26,12 +26,12 @@ import org.jetbrains.kotlin.psi.JetPsiFactory
 
 public class AndroidSimpleNameReferenceExtension : SimpleNameReferenceExtension {
     override fun isReferenceTo(reference: JetSimpleNameReference, element: PsiElement): Boolean? {
-        val resolvedElement = reference.resolve() ?: return null
+        val resolvedElement = reference.resolve() as? JetProperty ?: return null
 
         if (isAndroidSyntheticElement(resolvedElement)) {
             if (element is ValueResourceElementWrapper) {
-                val resource = element.getValue()
-                return (resolvedElement as JetProperty).getName() == resource.substring(resource.indexOf('/') + 1)
+                val resource = element.value
+                return resolvedElement.name == resource.substring(resource.indexOf('/') + 1)
             }
         }
         return null
