@@ -31,21 +31,31 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.util.FileContentUtilCore
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.framework.KotlinJavaScriptLibraryDetectionUtil
 import org.jetbrains.kotlin.idea.project.ProjectStructureUtil.isJsKotlinModule
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
+import java.io.File
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-public class KotlinJavaScriptLibraryManager private constructor(private var myProject: Project?) : ProjectComponent, ModuleRootListener {
+public class KotlinJavaScriptLibraryManager private constructor(private var myProject: Project?) : ProjectComponent, ModuleRootListener, BulkFileListener {
     private val myMuted = AtomicBoolean(false)
+
+    private val map: MutableMap<String, Long> = Collections.synchronizedMap(hashMapOf())
 
     override fun getComponentName(): String = "KotlinJavascriptLibraryManager"
 
     override fun projectOpened() {
         val project = myProject!!
         project.messageBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, this)
+        project.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, this)
         DumbService.getInstance(project).smartInvokeLater() { updateProjectLibrary() }
     }
 
@@ -57,6 +67,36 @@ public class KotlinJavaScriptLibraryManager private constructor(private var myPr
 
     override fun disposeComponent() {
         myProject = null
+    }
+
+    override fun after(events: List<VFileEvent>) {
+        if (myMuted.get()) return
+
+        val changed = events
+                .filter { it is VFilePropertyChangeEvent &&
+                          it !is MyVFilePropertyChangeEvent &&
+                          it.propertyName == VirtualFile.PROP_NAME &&
+                          it.oldValue == it.newValue }
+                .map { it.file }
+                .filterNotNull()
+
+        val files = arrayListOf<VirtualFile>()
+        synchronized(map) {
+            changed.forEach { file ->
+                PathUtil.getLocalPath(file)?.let { path ->
+                    if (map.containsKey(path)) {
+                        map[path] = file.timeStamp
+                        files.add(file)
+                    }
+                }
+            }
+        }
+
+        val application = ApplicationManager.getApplication()
+        refreshFiles(files, application.isUnitTestMode)
+    }
+
+    override fun before(events: List<VFileEvent>) {
     }
 
     override fun beforeRootsChange(event: ModuleRootEvent) {
@@ -92,6 +132,7 @@ public class KotlinJavaScriptLibraryManager private constructor(private var myPr
 
             val clsRootUrls: MutableList<String> = arrayListOf()
             val srcRootUrls: MutableList<String> = arrayListOf()
+            val rootFiles: MutableList<VirtualFile> = arrayListOf()
 
             ModuleRootManager.getInstance(module).orderEntries().librariesOnly().forEachLibrary() { library ->
                     if (KotlinJavaScriptLibraryDetectionUtil.isKotlinJavaScriptLibrary(library)) {
@@ -103,6 +144,7 @@ public class KotlinJavaScriptLibraryManager private constructor(private var myPr
                             val metadataList = KotlinJavascriptMetadataUtils.loadMetadata(path!!)
                             if (metadataList.filter { !it.isAbiVersionCompatible }.isNotEmpty()) continue
 
+                            VfsUtil.findFileByIoFile(File(path), true)?.let { rootFiles.add(it) }
                             val classRoot = KotlinJavaScriptMetaFileSystem.getInstance().refreshAndFindFileByPath("$path!/")
                             classRoot?.let {
                                 clsRootUrls.add(it.url)
@@ -116,7 +158,21 @@ public class KotlinJavaScriptLibraryManager private constructor(private var myPr
                     true
                 }
 
-            val changesToApply = ChangesToApply(clsRootUrls, srcRootUrls)
+            val filesToRefresh = arrayListOf<VirtualFile>()
+            if (rootFiles.isNotEmpty()) {
+                synchronized(map) {
+                    rootFiles.forEach { file ->
+                        val path = PathUtil.getLocalPath(file)!!
+                        val value = map.get(path)
+                        if (value == null || value != file.timeStamp) {
+                            filesToRefresh.add(file)
+                            map[path] = file.timeStamp
+                        }
+                    }
+                }
+            }
+
+            val changesToApply = ChangesToApply(clsRootUrls, srcRootUrls, filesToRefresh)
 
             resetLibraries(module, changesToApply, LIBRARY_NAME, synchronously)
         }
@@ -148,8 +204,30 @@ public class KotlinJavaScriptLibraryManager private constructor(private var myPr
         }
     }
 
+    private fun refreshFiles(files: List<VirtualFile>, synchronously: Boolean) {
+        val events = files.filter { !it.isDirectory && it.isValid }. map { MyVFilePropertyChangeEvent(it, false) }
+        if (events.isEmpty()) return
+
+        val commitInWriteAction = Runnable {
+            ApplicationManager.getApplication().runWriteAction() {
+                val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES)
+                publisher.before(events)
+                publisher.after(events)
+            }
+        }
+
+        if (synchronously) {
+            commitInWriteAction.run()
+        }
+        else {
+            ApplicationManager.getApplication().invokeLater(commitInWriteAction, myProject!!.getDisposed())
+        }
+    }
+
     synchronized private fun applyChangeImpl(module: Module, changesToApply: ChangesToApply, libraryName: String) {
         if (module.isDisposed) return
+
+        refreshFiles(changesToApply.filesToRefresh, true)
 
         val model = ModuleRootManager.getInstance(module).modifiableModel
         val libraryTableModel = model.moduleLibraryTable.modifiableModel
@@ -211,7 +289,21 @@ public class KotlinJavaScriptLibraryManager private constructor(private var myPr
     private fun findLibraryByName(module: Module, libraryName: String) =
             OrderEntryUtil.findLibraryOrderEntry(ModuleRootManager.getInstance(module), libraryName)?.library
 
-    private class ChangesToApply(val clsUrlsToAdd: List<String> = listOf(), val srcUrlsToAdd: List<String> = listOf())
+    private class ChangesToApply(val clsUrlsToAdd: List<String> = listOf(), val srcUrlsToAdd: List<String> = listOf(), val filesToRefresh: List<VirtualFile> = listOf())
+
+    private class MyVFilePropertyChangeEvent(
+            file: VirtualFile,
+            isFromRefresh: Boolean
+    ) : VFilePropertyChangeEvent(
+            FileContentUtilCore.FORCE_RELOAD_REQUESTOR,
+            file,
+            VirtualFile.PROP_NAME,
+            file.name,
+            file.name,
+            isFromRefresh
+    ) {
+        override fun getPath(): String = super.getPath() + KotlinJavaScriptMetaFileSystem.ARCHIVE_SUFFIX
+    }
 
     companion object {
 
