@@ -20,11 +20,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinModuleMappingIndex
 import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider
+import org.jetbrains.kotlin.load.kotlin.PackageFacades
 
 public class IDEPackageMappingProvider(val scope: GlobalSearchScope) : PackageMappingProvider {
 
     override fun findPackageMembers(packageName: String): List<String> {
-        val values: MutableList<List<String>> = FileBasedIndex.getInstance().getValues(KotlinModuleMappingIndex.KEY, packageName, scope)
-        return values.flatMap { it }.distinct()
+        val values: MutableList<PackageFacades> = FileBasedIndex.getInstance().getValues(KotlinModuleMappingIndex.KEY, packageName, scope)
+        return values.flatMap { it.parts }.distinct()
     }
 }

@@ -49,4 +49,30 @@ public class PackageFacades(val internalName: String) {
             out.write("$internalName->$i\n")
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is PackageFacades) {
+            return false;
+        }
+
+        if (other.internalName != internalName) {
+            return false;
+        }
+
+        if (other.parts.size() != parts.size()) {
+            return false;
+        }
+
+        for (part in other.parts) {
+            if (!parts.contains(part)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    override fun hashCode(): Int {
+        return parts.size() + (parts.firstOrNull()?.hashCode() ?: 0)
+    }
 }
