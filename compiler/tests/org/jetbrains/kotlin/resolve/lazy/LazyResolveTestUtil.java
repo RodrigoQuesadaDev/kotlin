@@ -48,16 +48,21 @@ public class LazyResolveTestUtil {
 
     @NotNull
     public static ModuleDescriptor resolve(@NotNull Project project, @NotNull List<JetFile> sourceFiles) {
-        return resolve(project, new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace(), sourceFiles);
+        return resolve(project, new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace(), sourceFiles, PackageMappingProvider.EMPTY);
     }
 
     @NotNull
-    public static ModuleDescriptor resolve(@NotNull Project project, @NotNull BindingTrace trace, @NotNull List<JetFile> sourceFiles) {
+    public static ModuleDescriptor resolve(
+            @NotNull Project project,
+            @NotNull BindingTrace trace,
+            @NotNull List<JetFile> sourceFiles,
+            @NotNull PackageMappingProvider packageMappingProvider
+    ) {
         ModuleContext moduleContext = TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(project, "test");
 
         TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegrationNoIncremental(
                 moduleContext, sourceFiles, trace, TopDownAnalysisMode.TopLevelDeclarations,
-                PackageMappingProvider.EMPTY
+                packageMappingProvider
         );
 
         return moduleContext.getModule();
