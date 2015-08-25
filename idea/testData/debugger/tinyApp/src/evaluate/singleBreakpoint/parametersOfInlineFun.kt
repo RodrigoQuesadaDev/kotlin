@@ -3,6 +3,7 @@ package parametersOfInlineFun
 
 fun main(args: Array<String>) {
     val a = A(1)
+    // RESUME: 1
     //Breakpoint!
     a.foo { 1 + 1 }
 }
@@ -16,8 +17,6 @@ inline fun A.foo(f: (i: Int) -> Unit) {
 }
 
 class A(val prop: Int)
-
-// RESUME: 1
 
 // EXPRESSION: primitive
 // RESULT: 1: I
