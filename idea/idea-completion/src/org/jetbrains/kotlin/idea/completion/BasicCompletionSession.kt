@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.JavaPsiFacade
@@ -103,6 +104,9 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
         )
     }
 
+    override val expectedInfos: Collection<ExpectedInfo>
+        get() = smartCompletion?.expectedInfos ?: emptyList()
+
     private fun calcCompletionKind(): CompletionKind {
         if (NamedArgumentCompletion.isOnlyNamedArgumentExpected(position)) {
             return CompletionKind.NAMED_ARGUMENTS_ONLY
@@ -142,27 +146,25 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
     }
 
     private fun shouldCompleteParameterNameAndType(): Boolean {
-        when (completionKind) {
-            CompletionKind.PARAMETER_NAME, CompletionKind.ANNOTATION_TYPES_OR_PARAMETER_NAME -> {
-                val parameter = position.getNonStrictParentOfType<JetParameter>()!!
-                val list = parameter.getParent() as? JetParameterList ?: return false
-                val owner = list.getParent()
-                return owner !is JetCatchClause &&
-                       owner !is JetPropertyAccessor &&
-                       !((owner as? JetPrimaryConstructor)?.getContainingClassOrObject()?.isAnnotation() ?: false)
-            }
+        if (completionKind != CompletionKind.PARAMETER_NAME && completionKind != CompletionKind.ANNOTATION_TYPES_OR_PARAMETER_NAME) return false
 
-            else -> return false
+        val parameter = position.getNonStrictParentOfType<JetParameter>()!!
+        val list = parameter.parent as? JetParameterList ?: return false
+        val owner = list.parent
+        return when (owner) {
+            is JetCatchClause, is JetPropertyAccessor, is JetFunctionLiteral -> false
+            is JetPrimaryConstructor -> !owner.getContainingClassOrObject().isAnnotation()
+            else -> true
         }
     }
 
     public fun shouldDisableAutoPopup(): Boolean {
-        if (completionKind == CompletionKind.PARAMETER_NAME || completionKind == CompletionKind.ANNOTATION_TYPES_OR_PARAMETER_NAME) {
-            if (LookupCancelWatcher.getInstance(project).wasAutoPopupRecentlyCancelled(parameters.editor, position.startOffset)) {
-                return true
-            }
+        if (LookupCancelWatcher.getInstance(project).wasAutoPopupRecentlyCancelled(parameters.editor, position.startOffset)) {
+            return true
+        }
 
-            if (!shouldCompleteParameterNameAndType()) {
+        if (completionKind == CompletionKind.PARAMETER_NAME || completionKind == CompletionKind.ANNOTATION_TYPES_OR_PARAMETER_NAME) {
+            if (!shouldCompleteParameterNameAndType() || TemplateManager.getInstance(project).getActiveTemplate(parameters.editor) != null) {
                 return true
             }
         }
@@ -172,6 +174,13 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
 
     override fun doComplete() {
         assert(parameters.getCompletionType() == CompletionType.BASIC)
+
+        if (parameters.isAutoPopup) {
+            collector.addLookupElementPostProcessor { lookupElement ->
+                lookupElement.putUserData(LookupCancelWatcher.AUTO_POPUP_AT, position.startOffset)
+                lookupElement
+            }
+        }
 
         // if we are typing parameter name, restart completion each time we type an upper case letter because new suggestions will appear (previous words can be used as user prefix)
         if (parameterNameAndTypeCompletion != null) {
@@ -183,9 +192,6 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
             collector.addLookupElementPostProcessor { lookupElement ->
                 lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
                 lookupElement.putUserData(KotlinCompletionCharFilter.HIDE_LOOKUP_ON_COLON, Unit)
-                if (parameters.isAutoPopup) {
-                    lookupElement.putUserData(LookupCancelWatcher.DO_NOT_REPEAT_AUTO_POPUP_AT, position.startOffset)
-                }
                 lookupElement
             }
 
@@ -211,7 +217,7 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
                 collector.addElements(additionalItems)
             }
 
-            collector.addDescriptorElements(referenceVariants, suppressAutoInsertion = false)
+            collector.addDescriptorElements(referenceVariants)
 
             val keywordsPrefix = prefix.substringBefore('@') // if there is '@' in the prefix - use shorter prefix to not loose 'this' etc
             KeywordCompletion.complete(expression ?: parameters.getPosition(), keywordsPrefix) { lookupElement ->
@@ -274,7 +280,7 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
 
                 if (position.getContainingFile() is JetCodeFragment) {
                     flushToResultSet()
-                    collector.addDescriptorElements(getRuntimeReceiverTypeReferenceVariants(), suppressAutoInsertion = false, withReceiverCast = true)
+                    collector.addDescriptorElements(getRuntimeReceiverTypeReferenceVariants(), withReceiverCast = true)
                 }
             }
         }
@@ -284,7 +290,7 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
 
     private fun addNonImported(completionKind: CompletionKind) {
         if (completionKind == CompletionKind.ALL) {
-            collector.addDescriptorElements(getTopLevelExtensions(), suppressAutoInsertion = true)
+            collector.addDescriptorElements(getTopLevelExtensions(), notImported = true)
         }
 
         flushToResultSet()
@@ -293,7 +299,7 @@ class BasicCompletionSession(configuration: CompletionSessionConfiguration,
             completionKind.classKindFilter?.let { addAllClasses(it) }
 
             if (completionKind == CompletionKind.ALL) {
-                collector.addDescriptorElements(getTopLevelCallables(), suppressAutoInsertion = true)
+                collector.addDescriptorElements(getTopLevelCallables(), notImported = true)
             }
         }
 

@@ -27,11 +27,11 @@ import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.completion.handlers.*
+import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.types.JetType
-import java.util.ArrayList
-import java.util.LinkedHashMap
+import java.util.*
 
 class LookupElementsCollector(
         private val defaultPrefixMatcher: PrefixMatcher,
@@ -79,15 +79,15 @@ class LookupElementsCollector(
     }
 
     public fun addDescriptorElements(descriptors: Iterable<DeclarationDescriptor>,
-                                     suppressAutoInsertion: Boolean, // auto-insertion suppression is used for elements that require adding an import
+                                     notImported: Boolean = false,
                                      withReceiverCast: Boolean = false
     ) {
         for (descriptor in descriptors) {
-            addDescriptorElements(descriptor, suppressAutoInsertion, withReceiverCast)
+            addDescriptorElements(descriptor, notImported, withReceiverCast)
         }
     }
 
-    public fun addDescriptorElements(descriptor: DeclarationDescriptor, suppressAutoInsertion: Boolean, withReceiverCast: Boolean = false) {
+    public fun addDescriptorElements(descriptor: DeclarationDescriptor, notImported: Boolean = false, withReceiverCast: Boolean = false) {
         run {
             var lookupElement = lookupElementFactory.createLookupElement(descriptor, true)
 
@@ -99,12 +99,7 @@ class LookupElementsCollector(
                 lookupElement = lookupElement.withBracesSurrounding()
             }
 
-            if (suppressAutoInsertion) {
-                addElementWithAutoInsertionSuppressed(lookupElement)
-            }
-            else {
-                addElement(lookupElement)
-            }
+            addElement(lookupElement, notImported = notImported)
         }
 
         // add special item for function with one argument of function type with more than one parameter
@@ -138,6 +133,8 @@ class LookupElementsCollector(
 
     private fun addSpecialFunctionDescriptorElement(descriptor: FunctionDescriptor, parameterType: JetType) {
         var lookupElement = lookupElementFactory.createLookupElement(descriptor, true)
+        val needTypeArguments = (lookupElementFactory.getDefaultInsertHandler(descriptor) as KotlinFunctionInsertHandler).needTypeArguments
+        val lambdaInfo = GenerateLambdaInfo(parameterType, true)
 
         lookupElement = object : LookupElementDecorator<LookupElement>(lookupElement) {
             override fun renderElement(presentation: LookupElementPresentation) {
@@ -150,7 +147,7 @@ class LookupElementsCollector(
             }
 
             override fun handleInsert(context: InsertionContext) {
-                KotlinFunctionInsertHandler(CaretPosition.IN_BRACKETS, GenerateLambdaInfo(parameterType, true)).handleInsert(context, this)
+                KotlinFunctionInsertHandler(needTypeArguments, needValueArguments = true, lambdaInfo = lambdaInfo).handleInsert(context, this)
             }
         }
 
@@ -161,55 +158,64 @@ class LookupElementsCollector(
         addElement(lookupElement)
     }
 
-    public fun addElement(element: LookupElement, prefixMatcher: PrefixMatcher = defaultPrefixMatcher) {
-        if (prefixMatcher.prefixMatches(element)) {
-            val decorated = object : LookupElementDecorator<LookupElement>(element) {
-                override fun handleInsert(context: InsertionContext) {
-                    getDelegate().handleInsert(context)
+    public fun addElement(element: LookupElement, prefixMatcher: PrefixMatcher = defaultPrefixMatcher, notImported: Boolean = false) {
+        if (!prefixMatcher.prefixMatches(element)) return
 
-                    if (context.shouldAddCompletionChar() && !isJustTyping(context, this)) {
-                        when (context.getCompletionChar()) {
-                            ',' -> WithTailInsertHandler.commaTail().postHandleInsert(context, getDelegate())
+        if (notImported) {
+            element.putUserData(NOT_IMPORTED_KEY, Unit)
+            if (isResultEmpty && elements.isEmpty()) { /* without these checks we may get duplicated items */
+                addElement(element.suppressAutoInsertion(), prefixMatcher)
+            }
+            else {
+                addElement(element, prefixMatcher)
+            }
+            return
+        }
 
-                            '=' -> WithTailInsertHandler.eqTail().postHandleInsert(context, getDelegate())
+        val decorated = object : LookupElementDecorator<LookupElement>(element) {
+            override fun handleInsert(context: InsertionContext) {
+                getDelegate().handleInsert(context)
 
-                            '!' -> {
-                                WithExpressionPrefixInsertHandler("!").postHandleInsert(context)
-                                context.setAddCompletionChar(false)
-                            }
+                if (context.shouldAddCompletionChar() && !isJustTyping(context, this)) {
+                    when (context.getCompletionChar()) {
+                        ',' -> WithTailInsertHandler.commaTail().postHandleInsert(context, getDelegate())
+
+                        '=' -> WithTailInsertHandler.eqTail().postHandleInsert(context, getDelegate())
+
+                        '!' -> {
+                            WithExpressionPrefixInsertHandler("!").postHandleInsert(context)
+                            context.setAddCompletionChar(false)
                         }
                     }
-
                 }
-            }
 
-            var result: LookupElement = decorated
-            for (postProcessor in postProcessors) {
-                result = postProcessor(result)
             }
-
-            elements.getOrPut(prefixMatcher) { ArrayList() }.add(result)
         }
+
+        var result: LookupElement = decorated
+        for (postProcessor in postProcessors) {
+            result = postProcessor(result)
+        }
+
+        val psiElement = (result.`object` as? DeclarationLookupObject)?.psiElement
+        if (psiElement != null) {
+            result = object : LookupElementDecorator<LookupElement>(result) {
+                override fun getPsiElement() = psiElement
+            }
+        }
+
+        elements.getOrPut(prefixMatcher) { ArrayList() }.add(result)
     }
 
     // used to avoid insertion of spaces before/after ',', '=' on just typing
     private fun isJustTyping(context: InsertionContext, element: LookupElement): Boolean {
         if (!completionParameters.isAutoPopup()) return false
         val insertedText = context.getDocument().getText(TextRange(context.getStartOffset(), context.getTailOffset()))
-        return insertedText == element.getUserData(KotlinCompletionCharFilter.JUST_TYPING_PREFIX)
+        return insertedText == element.getUserDataDeep(KotlinCompletionCharFilter.JUST_TYPING_PREFIX)
     }
 
-    public fun addElementWithAutoInsertionSuppressed(element: LookupElement) {
-        if (isResultEmpty && elements.isEmpty()) { /* without these checks we may get duplicated items */
-            addElement(element.suppressAutoInsertion())
-        }
-        else {
-            addElement(element)
-        }
-    }
-
-    public fun addElements(elements: Iterable<LookupElement>) {
-        elements.forEach { addElement(it) }
+    public fun addElements(elements: Iterable<LookupElement>, prefixMatcher: PrefixMatcher = defaultPrefixMatcher, notImported: Boolean = false) {
+        elements.forEach { addElement(it, prefixMatcher, notImported) }
     }
 
     public fun advertiseSecondCompletion() {

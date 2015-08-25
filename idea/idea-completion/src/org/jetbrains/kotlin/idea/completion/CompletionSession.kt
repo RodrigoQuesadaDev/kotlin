@@ -31,10 +31,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
-import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
-import org.jetbrains.kotlin.idea.core.comparePossiblyOverridingDescriptors
-import org.jetbrains.kotlin.idea.core.getResolutionScope
-import org.jetbrains.kotlin.idea.core.isVisible
+import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
@@ -51,6 +49,7 @@ import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.calls.smartcasts.SmartCastManager
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
@@ -142,10 +141,11 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
     protected val receiversData: ReferenceVariantsHelper.ReceiversData? = nameExpression?.let { referenceVariantsHelper.getReferenceVariantsReceivers(it) }
 
     protected val lookupElementFactory: LookupElementFactory = run {
+        var receiverTypes = emptyList<JetType>()
         if (receiversData != null) {
             val dataFlowInfo = bindingContext.getDataFlowInfo(expression)
 
-            var receiverTypes = receiversData.receivers.flatMap { receiverValue ->
+            receiverTypes = receiversData.receivers.flatMap { receiverValue ->
                 val dataFlowValue = DataFlowValueFactory.createDataFlowValue(receiverValue, bindingContext, moduleDescriptor)
                 if (dataFlowValue.isPredictable) { // we don't include smart cast receiver types for "unpredictable" receiver value to mark members grayed
                     resolutionFacade.frontendService<SmartCastManager>()
@@ -159,12 +159,9 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
             if (receiversData.callType == CallType.SAFE) {
                 receiverTypes = receiverTypes.map { it.makeNotNullable() }
             }
+        }
 
-            LookupElementFactory(resolutionFacade, receiverTypes)
-        }
-        else {
-            LookupElementFactory(resolutionFacade, emptyList())
-        }
+        LookupElementFactory(resolutionFacade, receiverTypes, { expectedInfos })
     }
 
     private val collectorContext = if (expression?.getParent() is JetSimpleNameStringTemplateEntry)
@@ -221,6 +218,15 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
     }
 
     public fun complete(): Boolean {
+        val statisticsContext = calcContextForStatisticsInfo()
+        if (statisticsContext != null) {
+            collector.addLookupElementPostProcessor { lookupElement ->
+                // we should put data into the original element because of DecoratorCompletionStatistician
+                lookupElement.putUserDataDeep(STATISTICS_INFO_CONTEXT_KEY, statisticsContext)
+                lookupElement
+            }
+        }
+
         doComplete()
         flushToResultSet()
         return !collector.isResultEmpty
@@ -230,16 +236,42 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
 
     protected abstract val descriptorKindFilter: DescriptorKindFilter?
 
+    protected abstract val expectedInfos: Collection<ExpectedInfo>
+
     protected open fun createSorter(): CompletionSorter {
         var sorter = CompletionSorter.defaultSorter(parameters, prefixMatcher)!!
 
-        sorter = sorter.weighBefore("stats", DeprecatedWeigher, PriorityWeigher, KindWeigher)
+        val importableFqNameClassifier = ImportableFqNameClassifier(file)
 
-        sorter = sorter.weighAfter("stats", DeclarationRemotenessWeigher(parameters.originalFile as JetFile))
+        sorter = sorter.weighBefore("stats", DeprecatedWeigher, PriorityWeigher, NotImportedWeigher(importableFqNameClassifier), KindWeigher, CallableWeigher)
+
+        sorter = sorter.weighAfter("stats", VariableOrFunctionWeigher, ImportedWeigher(importableFqNameClassifier))
 
         sorter = sorter.weighBefore("middleMatching", PreferMatchingItemWeigher)
 
         return sorter
+    }
+
+    protected fun calcContextForStatisticsInfo(): String? {
+        if (expectedInfos.isEmpty()) return null
+
+        var context = expectedInfos
+                .map { it.fuzzyType?.type?.constructor?.declarationDescriptor?.importableFqName }
+                .filterNotNull()
+                .distinct()
+                .singleOrNull()
+                ?.let { "expectedType=$it" }
+
+        if (context == null) {
+            context = expectedInfos
+                    .map { it.expectedName }
+                    .filterNotNull()
+                    .distinct()
+                    .singleOrNull()
+                    ?.let { "expectedName=$it" }
+        }
+
+        return context
     }
 
     protected val referenceVariants: Collection<DeclarationDescriptor> by lazy {
@@ -302,8 +334,8 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
     protected fun addAllClasses(kindFilter: (ClassKind) -> Boolean) {
         AllClassesCompletion(parameters, indicesHelper, prefixMatcher, kindFilter)
                 .collect(
-                        { descriptor -> collector.addDescriptorElements(descriptor, suppressAutoInsertion = true) },
-                        { javaClass -> collector.addElementWithAutoInsertionSuppressed(lookupElementFactory.createLookupElementForJavaClass(javaClass)) }
+                        { descriptor -> collector.addDescriptorElements(descriptor, notImported = true) },
+                        { javaClass -> collector.addElement(lookupElementFactory.createLookupElementForJavaClass(javaClass), notImported = true) }
                 )
     }
 }

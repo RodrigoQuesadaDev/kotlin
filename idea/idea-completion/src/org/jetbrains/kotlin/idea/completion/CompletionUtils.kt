@@ -27,9 +27,9 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.JetIcons
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.completion.handlers.CastReceiverInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ShortenReferences
 import org.jetbrains.kotlin.idea.util.findLabelAndCall
@@ -46,7 +46,27 @@ import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
-import java.util.ArrayList
+import java.util.*
+
+@tailRecursive
+fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
+    if (this is LookupElementDecorator<*>) {
+        getDelegate().putUserDataDeep(key, value)
+    }
+    else {
+        putUserData(key, value)
+    }
+}
+
+@tailRecursive
+fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
+    if (this is LookupElementDecorator<*>) {
+        return getDelegate().getUserDataDeep(key)
+    }
+    else {
+        return getUserData(key)
+    }
+}
 
 enum class ItemPriority {
     DEFAULT,
@@ -60,6 +80,10 @@ fun LookupElement.assignPriority(priority: ItemPriority): LookupElement {
     putUserData(ITEM_PRIORITY_KEY, priority)
     return this
 }
+
+val STATISTICS_INFO_CONTEXT_KEY = Key<String>("STATISTICS_INFO_CONTEXT_KEY")
+
+val NOT_IMPORTED_KEY = Key<Unit>("NOT_IMPORTED_KEY")
 
 fun LookupElement.suppressAutoInsertion() = AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(this)
 
