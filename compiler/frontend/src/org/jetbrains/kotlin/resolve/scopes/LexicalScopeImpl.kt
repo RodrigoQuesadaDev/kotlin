@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.Printer
 
-public class LexicalScopeImpl(
+public class LexicalScopeImpl jvmOverloads constructor(
         override val parent: LexicalScope,
         override val ownerDescriptor: DeclarationDescriptor,
         override val isOwnerDescriptorAccessibleByLabel: Boolean,
