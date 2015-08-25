@@ -211,6 +211,12 @@ public class KotlinEvaluateExpressionTestGenerated extends AbstractKotlinEvaluat
             doSingleBreakpointTest(fileName);
         }
 
+        @TestMetadata("parametersOfInlineFun.kt")
+        public void testParametersOfInlineFun() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/debugger/tinyApp/src/evaluate/singleBreakpoint/parametersOfInlineFun.kt");
+            doSingleBreakpointTest(fileName);
+        }
+
         @TestMetadata("privateMember.kt")
         public void testPrivateMember() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/testData/debugger/tinyApp/src/evaluate/singleBreakpoint/privateMember.kt");

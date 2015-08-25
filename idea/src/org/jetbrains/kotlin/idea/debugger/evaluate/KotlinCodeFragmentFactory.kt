@@ -20,6 +20,10 @@ import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImports
+import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.jdi.LocalVariableProxyImpl
+import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -32,20 +36,26 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ArrayReference
-import com.sun.jdi.ObjectReference
 import com.sun.jdi.PrimitiveValue
 import com.sun.jdi.Value
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.KotlinLightClass
 import org.jetbrains.kotlin.idea.JetFileType
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.refactoring.j2kText
 import org.jetbrains.kotlin.idea.debugger.KotlinEditorTextProvider
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.inline.InlineUtil
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.utils.addToStdlib.check
-import java.util.HashMap
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.jvm.java
 
@@ -106,6 +116,54 @@ class KotlinCodeFragmentFactory: CodeFragmentFactory() {
             }
         })
 
+        if (contextElement != null) {
+            val lambdas = getInlinedLambdasInside(contextElement)
+            if (lambdas.isNotEmpty()) {
+                codeFragment.putCopyableUserData(JetCodeFragment.ADDITIONAL_CONTEXT_FOR_LAMBDA, lamdba@ {
+                    val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
+
+                    val semaphore = Semaphore()
+                    semaphore.down()
+
+                    var visibleVariables: List<Pair<LocalVariableProxyImpl, Value>>? = null
+
+                    val worker = object : DebuggerCommandImpl() {
+                        override fun action() {
+                            val frameProxy = if (ApplicationManager.getApplication().isUnitTestMode)
+                                context?.getCopyableUserData(DEBUG_FRAME_FOR_TESTS)
+                            else
+                                debuggerContext.frameProxy
+
+                            visibleVariables = frameProxy?.let {f -> f.visibleVariables().map { it to f.getValue(it) }} ?: emptyList()
+                        }
+                    }
+
+                    debuggerContext.debugProcess?.managerThread?.invoke(worker)
+
+                    for (i in 0..50) {
+                        if (visibleVariables != null) break
+                        if (semaphore.waitFor(20)) break
+                    }
+
+                    for (lambda in lambdas) {
+                        val function = lambda.analyze(BodyResolveMode.PARTIAL).get(BindingContext.FUNCTION, lambda)
+                        if (visibleVariables != null && function != null && function.valueParameters.all {
+                            p ->
+                            visibleVariables?.firstOrNull { it.first.name() == p.name.asString() } != null
+                        }) {
+                                val fragmentForVisibleVariables = createCodeFragmentForVisibleVariables(lambda.project, visibleVariables!!)
+                                return@lamdba createWrappingContext(
+                                        fragmentForVisibleVariables.first,
+                                        fragmentForVisibleVariables.second,
+                                        lambda.bodyExpression,
+                                        lambda.project)
+                        }
+                    }
+                    return@lamdba null
+                })
+            }
+        }
+
         return codeFragment
     }
 
@@ -131,6 +189,7 @@ class KotlinCodeFragmentFactory: CodeFragmentFactory() {
     companion object {
         public val LABEL_VARIABLE_VALUE_KEY: Key<Value> = Key.create<Value>("_label_variable_value_key_")
         public val DEBUG_LABEL_SUFFIX: String = "_DebugLabel"
+        @TestOnly val DEBUG_FRAME_FOR_TESTS: Key<StackFrameProxyImpl> = Key.create("DEBUG_FRAME_FOR_TESTS")
 
         fun getContextElement(elementAt: PsiElement?): JetElement? {
             if (elementAt == null) return null
@@ -161,6 +220,16 @@ class KotlinCodeFragmentFactory: CodeFragmentFactory() {
 
         private fun JetElement?.check(): Boolean = this != null && this.check { KotlinEditorTextProvider.isAcceptedAsCodeFragmentContext(it) } != null
 
+        private fun getInlinedLambdasInside(contextElement: JetElement): List<JetFunction> {
+            val start = contextElement.startOffset
+            val end = contextElement.endOffset
+
+            val bindingContext = contextElement.analyze(BodyResolveMode.PARTIAL)
+            return CodeInsightUtils.findElementsOfClassInRange(contextElement.getContainingJetFile(), start, end, javaClass<JetFunctionLiteral>(), javaClass<JetNamedFunction>())
+                    .filterIsInstance<JetFunction>()
+                    .filter { JetPsiUtil.getParentCallIfPresent(it as JetExpression) != null && InlineUtil.isInlinedArgument(it, bindingContext, false) }
+        }
+
         //internal for tests
         fun createCodeFragmentForLabeledObjects(project: Project, markupMap: Map<*, ValueMarkup>): Pair<String, Map<String, Value>> {
             val sb = StringBuilder()
@@ -175,6 +244,22 @@ class KotlinCodeFragmentFactory: CodeFragmentFactory() {
                 sb.append("${createKotlinProperty(project, labelNameWithSuffix, objectRef.type().name(), TypeKind.getTypeKind(objectRef))}\n")
 
                 labeledObjects.put(labelNameWithSuffix, objectRef)
+            }
+            sb.append("val _debug_context_val = 1")
+            return sb.toString() to labeledObjects
+        }
+
+        private fun createCodeFragmentForVisibleVariables(project: Project, visibleVariables: List<Pair<LocalVariableProxyImpl, Value>>): Pair<String, Map<String, Value>> {
+            val sb = StringBuilder()
+            val labeledObjects = HashMap<String, Value>()
+            for ((variable, value) in visibleVariables) {
+                val variableName = variable.name()
+                if (!Name.isValidIdentifier(variableName)) continue
+
+                val kotlinProperty = createKotlinProperty(project, variableName, variable.typeName(), TypeKind.getTypeKind(value)) ?: continue
+                sb.append("$kotlinProperty\n")
+
+                labeledObjects.put(variableName, value)
             }
             sb.append("val _debug_context_val = 1")
             return sb.toString() to labeledObjects
