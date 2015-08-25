@@ -105,7 +105,7 @@ public val <T> Class<T>.kotlin: KClass<T>
  */
 public val Class<*>.kotlinPackage: KPackage?
     get() = if (getSimpleName().endsWith("Package") &&
-                getAnnotation(javaClass<kotlin.jvm.internal.KotlinPackage>()) != null) KPackageImpl(this) else null
+                getAnnotation(javaClass<kotlin.jvm.internal.KotlinPackage>()) != null) KPackageImpl(this, "undefined") else null
 
 
 /**

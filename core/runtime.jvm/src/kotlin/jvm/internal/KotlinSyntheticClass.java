@@ -25,6 +25,9 @@ public @interface KotlinSyntheticClass {
 
     Kind kind();
 
+    //TODO new kind
+    String[] data();
+
     enum Kind {
         PACKAGE_PART,
         TRAIT_IMPL,
