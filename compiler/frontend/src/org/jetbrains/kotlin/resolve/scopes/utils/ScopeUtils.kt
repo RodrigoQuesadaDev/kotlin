@@ -156,6 +156,12 @@ private class LexicalToJetScopeAdapter(val lexicalScope: LexicalScope): JetScope
     override fun getImplicitReceiversHierarchy() = lexicalScope.getImplicitReceiversHierarchy()
     override fun getOwnDeclaredDescriptors() = lexicalScope.getDeclaredDescriptors()
 
+    override fun equals(other: Any?) = other is LexicalToJetScopeAdapter && other.lexicalScope == this.lexicalScope
+
+    override fun hashCode() = lexicalScope.hashCode()
+
+    override fun toString() = "LexicalToJetScopeAdapter for $lexicalScope"
+
     override fun printScopeStructure(p: Printer) {
         p.println(javaClass.simpleName)
         p.pushIndent()
