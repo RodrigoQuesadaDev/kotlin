@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 
 public class DeprecatedSymbolValidator : SymbolUsageValidator {
     private val JAVA_DEPRECATED = FqName(javaClass<Deprecated>().getName())
@@ -106,8 +107,8 @@ public class DeprecatedSymbolValidator : SymbolUsageValidator {
         }
 
         if (target != null) {
-            return annotations.findUseSiteTargetedAnnotation(target, KotlinBuiltIns.FQ_NAMES.deprecated)
-                   ?: annotations.findUseSiteTargetedAnnotation(target, JAVA_DEPRECATED)
+            return Annotations.Companion.findUseSiteTargetedAnnotation(annotations, target, KotlinBuiltIns.FQ_NAMES.deprecated)
+                   ?: Annotations.Companion.findUseSiteTargetedAnnotation(annotations, target, JAVA_DEPRECATED)
         }
 
         return null

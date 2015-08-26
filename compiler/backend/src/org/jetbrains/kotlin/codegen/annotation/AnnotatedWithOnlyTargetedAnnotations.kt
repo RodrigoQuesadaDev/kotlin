@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.codegen.annotation
 
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
+import org.jetbrains.kotlin.descriptors.annotations.AnnotatedImpl
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.name.FqName
@@ -50,3 +51,5 @@ public class AnnotatedWithOnlyTargetedAnnotations(private val original: Annotate
         private fun getAdditionalTargetedAnnotations() = additionalAnnotations.getUseSiteTargetedAnnotations()
     }
 }
+
+public class AnnotatedSimple(annotations: Annotations) : AnnotatedImpl(annotations)

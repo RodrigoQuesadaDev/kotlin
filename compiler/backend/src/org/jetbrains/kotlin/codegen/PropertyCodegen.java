@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.codegen.annotation.AnnotatedWithFakeAnnotations;
+import org.jetbrains.kotlin.codegen.annotation.AnnotatedSimple;
 import org.jetbrains.kotlin.codegen.context.*;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.JetTypeMapper;
@@ -251,7 +252,7 @@ public class PropertyCodegen {
             int flags = ACC_DEPRECATED | ACC_FINAL | ACC_PRIVATE | ACC_STATIC | ACC_SYNTHETIC;
             MethodVisitor mv = v.newMethod(OtherOrigin(descriptor), flags, name, desc, null, null);
             AnnotationCodegen.forMethod(mv, typeMapper)
-                    .genAnnotations(new AnnotatedImpl(annotations), Type.VOID_TYPE, AnnotationUseSiteTarget.PROPERTY);
+                    .genAnnotations(new AnnotatedSimple(annotations), Type.VOID_TYPE, AnnotationUseSiteTarget.PROPERTY);
             mv.visitCode();
             mv.visitInsn(Opcodes.RETURN);
             mv.visitEnd();

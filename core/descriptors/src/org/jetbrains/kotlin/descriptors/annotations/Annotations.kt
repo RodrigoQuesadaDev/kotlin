@@ -49,23 +49,23 @@ public interface Annotations : Iterable<AnnotationDescriptor> {
 
             override fun toString() = "EMPTY"
         }
-    }
-}
 
-public fun Annotations.findAnyAnnotation(fqName: FqName): AnnotationWithTarget? {
-    return getAllAnnotations().firstOrNull { checkAnnotationName(it.annotation, fqName) }
-}
-
-public fun Annotations.findUseSiteTargetedAnnotation(target: AnnotationUseSiteTarget, fqName: FqName): AnnotationDescriptor? {
-    return getUseSiteTargetedAnnotations(target).firstOrNull { checkAnnotationName(it, fqName) }
-}
-
-private fun Annotations.getUseSiteTargetedAnnotations(target: AnnotationUseSiteTarget): List<AnnotationDescriptor> {
-    return getUseSiteTargetedAnnotations().fold(arrayListOf<AnnotationDescriptor>()) { list, targeted ->
-        if (target == targeted.target) {
-            list.add(targeted.annotation)
+        public fun findAnyAnnotation(annotations: Annotations, fqName: FqName): AnnotationWithTarget? {
+            return annotations.getAllAnnotations().firstOrNull { checkAnnotationName(it.annotation, fqName) }
         }
-        list
+
+        public fun findUseSiteTargetedAnnotation(annotations: Annotations, target: AnnotationUseSiteTarget, fqName: FqName): AnnotationDescriptor? {
+            return getUseSiteTargetedAnnotations(annotations, target).firstOrNull { checkAnnotationName(it, fqName) }
+        }
+
+        private fun getUseSiteTargetedAnnotations(annotations: Annotations, target: AnnotationUseSiteTarget): List<AnnotationDescriptor> {
+            return annotations.getUseSiteTargetedAnnotations().fold(arrayListOf<AnnotationDescriptor>()) { list, targeted ->
+                if (target == targeted.target) {
+                    list.add(targeted.annotation)
+                }
+                list
+            }
+        }
     }
 }
 

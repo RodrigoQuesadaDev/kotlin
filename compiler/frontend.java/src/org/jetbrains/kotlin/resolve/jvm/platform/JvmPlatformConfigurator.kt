@@ -114,6 +114,8 @@ public object RepeatableAnnotationChecker: AdditionalAnnotationChecker {
                 && classDescriptor.getAnnotationRetention() != KotlinRetention.SOURCE) {
                 trace.report(ErrorsJvm.NON_SOURCE_REPEATED_ANNOTATION.on(entry));
             }
+
+            existingTargetsForAnnotation.add(useSiteTarget)
         }
     }
 }
