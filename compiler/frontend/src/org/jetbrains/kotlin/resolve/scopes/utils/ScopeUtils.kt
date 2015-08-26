@@ -219,6 +219,12 @@ private class MemberScopeToFileScopeAdapter(val memberScope: JetScope): FileScop
 
     override fun getDeclaredFunctions(name: Name, location: LookupLocation) = memberScope.getFunctions(name, location)
 
+    override fun equals(other: Any?) = other is MemberScopeToFileScopeAdapter && other.memberScope == memberScope
+
+    override fun hashCode() = memberScope.hashCode()
+
+    override fun toString() = "MemberScopeToFileScopeAdapter for $memberScope"
+
     override fun printStructure(p: Printer) {
         p.println(javaClass.simpleName)
         p.pushIndent()
