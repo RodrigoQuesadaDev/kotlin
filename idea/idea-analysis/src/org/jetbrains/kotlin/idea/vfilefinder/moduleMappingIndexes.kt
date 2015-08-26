@@ -67,7 +67,7 @@ public object KotlinModuleMappingIndex : FileBasedIndexExtension<String, Package
 
         override fun save(out: DataOutput, value: PackageFacades?) {
             out.writeUTF(value!!.internalName)
-            out.write(value.parts.size())
+            out.writeInt(value.parts.size())
             value.parts.forEach { out.writeUTF(it) }
         }
     }
