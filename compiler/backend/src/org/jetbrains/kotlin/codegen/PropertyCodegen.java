@@ -212,12 +212,9 @@ public class PropertyCodegen {
     }
 
     private boolean hasBackingField(@NotNull JetNamedDeclaration p, @NotNull PropertyDescriptor descriptor) {
-        if (isInterface(descriptor.getContainingDeclaration()) ||
-                kind == OwnerKind.TRAIT_IMPL ||
-                Boolean.FALSE.equals(bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor))) {
-            return false;
-        }
-        else return true;
+        return !isInterface(descriptor.getContainingDeclaration()) &&
+               kind != OwnerKind.TRAIT_IMPL &&
+               !Boolean.FALSE.equals(bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor));
     }
 
     private boolean generateBackingField(

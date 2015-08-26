@@ -3,6 +3,7 @@
 <error>@file:suppress(BAZ)</error>
 
 <error>@<error>k</error>otlin.deprecated("message")</error>
+//CHECK
 @<error>s</error>uppress(<error><error>BAR</error></error>)
 <error>@<error>s</error>uppress(BAZ)</error>
 

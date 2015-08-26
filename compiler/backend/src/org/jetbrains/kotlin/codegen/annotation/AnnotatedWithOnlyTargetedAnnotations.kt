@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.name.FqName
 
 public interface WrappedAnnotated : Annotated {
-    public val original: Annotated
+    public val original: Annotated //RENAME
 }
 
 public class AnnotatedWithFakeAnnotations(override val original: Annotated, private val actual: Annotations) : WrappedAnnotated {

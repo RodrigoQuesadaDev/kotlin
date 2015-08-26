@@ -86,7 +86,7 @@ public class DeprecatedSymbolValidator : SymbolUsageValidator {
                     return accessorAnnotation to this
 
                 val classDescriptor = containingDeclaration as? ClassDescriptor
-                if (classDescriptor != null && classDescriptor.kind == ClassKind.OBJECT) {
+                if (classDescriptor != null && classDescriptor.isCompanionObject) {
                     val classAnnotation = classDescriptor.getDeclaredDeprecatedAnnotation()
                     if (classAnnotation != null)
                         return classAnnotation to classDescriptor

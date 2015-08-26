@@ -21,6 +21,9 @@ import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import kotlin.platform.platformStatic
 
+//WRITE DOCUMENTATION, how to use
+//MOVE to descriptors/annotations same module
+//pass lambda to check if field ex
 public class AnnotationSplitter(original: Annotations, applicableTargets: Set<AnnotationUseSiteTarget>) {
     private val annotations: Map<AnnotationUseSiteTarget, List<AnnotationWithTarget>>
     public val otherAnnotations: Annotations
@@ -45,9 +48,8 @@ public class AnnotationSplitter(original: Annotations, applicableTargets: Set<An
 
                 val declarationSiteTargetForCurrentTarget = KotlinTarget.USE_SITE_MAPPING[target] ?: continue
                 val applicableTargetsForAnnotation = AnnotationChecker.applicableTargetSet(annotationWithTarget.annotation)
-                val applicable = applicableTargetsForAnnotation.any { it == declarationSiteTargetForCurrentTarget }
 
-                if (applicable) {
+                if (declarationSiteTargetForCurrentTarget in applicableTargetsForAnnotation) {
                     map.getOrPut(target, { arrayListOf() }).add(annotationWithTarget)
                     continue@outer
                 }
@@ -73,11 +75,10 @@ public class AnnotationSplitter(original: Annotations, applicableTargets: Set<An
 
         platformStatic
         public fun create(original: Annotations, parameter: Boolean, hasBackingField: Boolean, isMutable: Boolean): AnnotationSplitter {
-            return AnnotationSplitter(original, with(hashSetOf(PROPERTY, PROPERTY_GETTER)) {
+            return AnnotationSplitter(original, hashSetOf(PROPERTY, PROPERTY_GETTER).apply {
                 if (parameter) add(CONSTRUCTOR_PARAMETER)
                 if (hasBackingField) add(FIELD)
                 if (isMutable) add(PROPERTY_SETTER)
-                this
             })
         }
     }
