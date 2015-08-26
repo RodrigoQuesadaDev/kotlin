@@ -111,6 +111,7 @@ public fun LexicalScope.getClassifier(name: Name, location: LookupLocation = NoL
 
 public fun LexicalScope.asJetScope(): JetScope {
     if (this is JetScope) return this
+    if (this is MemberScopeToFileScopeAdapter) return this.memberScope
     return LexicalToJetScopeAdapter(this)
 }
 
