@@ -42,58 +42,34 @@
             idea.maven.version="${ideaVersion}"/>
     </target>
 
-    <!-- deprecated -->
-    <target name="jb_update" depends="fetch-third-party,fetch-annotations">
+    <target name="jb_update" depends="fetch-third-party,fetch-annotations" description="Update dependencies for JB local network">
         <execute_update_with_idea_maven_artifacts
-            base.url="https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea"
+            base.url="http://jetbrains-com-mirror.labs.intellij.net/intellij-repository/releases/com/jetbrains/intellij/idea"
             idea.maven.version="${ideaVersion}"/>
     </target>
 
-    <target name="jb_update_continuous_141" depends="fetch-third-party,fetch-annotations">
+    <target name="update_continuous_141" depends="fetch-third-party,fetch-annotations">
         <execute_update_with_idea_maven_artifacts
             base.url="https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea"
             idea.maven.version="141-SNAPSHOT"/>
     </target>
 
-    <target name="jb_update_continuous_142" depends="fetch-third-party,fetch-annotations">
+    <target name="jb_update_continuous_141" depends="fetch-third-party,fetch-annotations">
+        <execute_update_with_idea_maven_artifacts
+            base.url="http://jetbrains-com-mirror.labs.intellij.net/intellij-repository/snapshots/com/jetbrains/intellij/idea"
+            idea.maven.version="141-SNAPSHOT"/>
+    </target>
+
+    <target name="update_continuous_142" depends="fetch-third-party,fetch-annotations">
         <execute_update_with_idea_maven_artifacts
             base.url="https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea"
             idea.maven.version="142-SNAPSHOT"/>
     </target>
 
-    <!-- deprecated -->
-    <target name="update_old" depends="fetch-third-party,fetch-annotations">
-        <execute_update_with_id_resolve
-            teamcity.server.url="https://teamcity.jetbrains.com"
-            build.locator.request="buildType:bt410,status:SUCCESS,branch:idea/${ideaVersion}"/>
-    </target>
-
-    <!-- deprecated -->
-    <target name="jb_update_old" depends="fetch-third-party,fetch-annotations">
-        <execute_update_with_id_resolve
-            teamcity.server.url="http://buildserver.labs.intellij.net"
-            build.locator.request="buildType:bt3498,status:SUCCESS,branch:/idea/${ideaVersion}"/>
-    </target>
-
-    <!-- deprecated -->
-    <target name="jb_update_continuous_139_old" depends="fetch-third-party,fetch-annotations">
-        <execute_update_with_id_resolve
-            teamcity.server.url="http://buildserver.labs.intellij.net"
-            build.locator.request="buildType:ijplatform_IjPlatformMaster_IdeaTrunk_CommunityDist,status:SUCCESS"/>
-    </target>
-
-    <!-- deprecated -->
-    <target name="jb_update_continuous_141_old" depends="fetch-third-party,fetch-annotations">
-        <execute_update_with_id_resolve
-            teamcity.server.url="http://buildserver.labs.intellij.net"
-            build.locator.request="buildType:ijplatform_IjPlatform141_IdeaTrunk_CommunityDist,status:SUCCESS"/>
-    </target>
-
-    <!-- deprecated -->
-    <target name="jb_update_continuous_142_old" depends="fetch-third-party,fetch-annotations">
-        <execute_update_with_id_resolve
-            teamcity.server.url="http://buildserver.labs.intellij.net"
-            build.locator.request="buildType:bt662,status:SUCCESS"/>
+    <target name="jb_update_continuous_142" depends="fetch-third-party,fetch-annotations">
+        <execute_update_with_idea_maven_artifacts
+            base.url="http://jetbrains-com-mirror.labs.intellij.net/intellij-repository/snapshots/com/jetbrains/intellij/idea"
+            idea.maven.version="142-SNAPSHOT"/>
     </target>
 
     <macrodef name="get-maven-library">
