@@ -16,11 +16,22 @@
 
 package org.jetbrains.kotlin.descriptors;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface SourceElement {
     SourceElement NO_SOURCE = new SourceElement() {
         @Override
         public String toString() {
             return "NO_SOURCE";
         }
+
+        @Nullable
+        @Override
+        public Object getContainingFile() {
+            return null;
+        }
     };
+
+    @Nullable
+    Object getContainingFile();
 }

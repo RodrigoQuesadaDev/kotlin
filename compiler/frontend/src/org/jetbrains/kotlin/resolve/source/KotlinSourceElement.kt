@@ -16,11 +16,13 @@
 
 package org.jetbrains.kotlin.resolve.source
 
-import org.jetbrains.kotlin.psi.JetElement
-import org.jetbrains.kotlin.descriptors.SourceElement
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.descriptors.SourceElement
+import org.jetbrains.kotlin.psi.JetElement
 
-public class KotlinSourceElement(override val psi: JetElement) : PsiSourceElement
+public class KotlinSourceElement(override val psi: JetElement) : PsiSourceElement {
+    override fun getContainingFile(): Any? = psi.containingFile
+}
 
 public fun JetElement?.toSourceElement(): SourceElement = if (this == null) SourceElement.NO_SOURCE else KotlinSourceElement(this)
 
