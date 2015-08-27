@@ -237,10 +237,10 @@ public class UnusedSymbolInspection : AbstractKotlinInspection() {
             }
         }
 
-
         return hasReferences(declaration, useScope) ||
                hasOverrides(declaration, useScope) ||
-               hasCompanionObjectMemberUsages(declaration, useScope)
+               (declaration is JetObjectDeclaration && declaration.isCompanion() &&
+                declaration.getBody()?.declarations?.isNotEmpty() == true)
     }
 
     private fun hasReferences(declaration: JetNamedDeclaration, useScope: SearchScope): Boolean {
@@ -254,12 +254,6 @@ public class UnusedSymbolInspection : AbstractKotlinInspection() {
 
     private fun hasOverrides(declaration: JetNamedDeclaration, useScope: SearchScope): Boolean {
         return DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null
-    }
-
-    private fun hasCompanionObjectMemberUsages(declaration: JetNamedDeclaration, useScope: SearchScope): Boolean {
-        if (declaration !is JetObjectDeclaration || !declaration.isCompanion()) return false
-
-        return declaration.declarations.any { it is JetNamedDeclaration && hasReferences(it, useScope) }
     }
 
     override fun createOptionsPanel(): JComponent? {
