@@ -18,14 +18,19 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.asJava.KotlinLightClass
 import org.jetbrains.kotlin.asJava.KotlinLightClassForExplicitDeclaration
 import org.jetbrains.kotlin.asJava.KotlinLightClassForPackage
 import org.jetbrains.kotlin.idea.JetBundle
+import org.jetbrains.kotlin.idea.references.JetSimpleNameReference
 import org.jetbrains.kotlin.psi.JetClassOrObject
 import org.jetbrains.kotlin.psi.JetConstructor
+import org.jetbrains.kotlin.psi.JetObjectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 public class RenameKotlinClassProcessor : RenameKotlinPsiProcessor() {
     override fun canProcessElement(element: PsiElement): Boolean {
@@ -48,6 +53,29 @@ public class RenameKotlinClassProcessor : RenameKotlinPsiProcessor() {
                 allRenames.put(file, newName + "." + virtualFile.extension)
             }
         }
+    }
+
+    override fun findReferences(element: PsiElement): Collection<PsiReference> {
+        if (element is JetObjectDeclaration && element.isCompanion()) {
+            return super.findReferences(element).filter { !it.isCompanionObjectClassReference(element) }
+        }
+        return super.findReferences(element)
+    }
+
+    private fun PsiReference.isCompanionObjectClassReference(companionObject: JetObjectDeclaration): Boolean {
+        if (this !is JetSimpleNameReference) {
+            return false
+        }
+        val name = companionObject.name
+        if (canonicalText != name) {
+            return true
+        }
+        val containingClass = companionObject.getStrictParentOfType<JetClassOrObject>() ?: return false
+        if (containingClass.name == companionObject.name) {
+            val qualifiedExpr = element.getQualifiedExpressionForSelector()
+            return qualifiedExpr == null || qualifiedExpr.receiverExpression.text != companionObject.name
+        }
+        return false
     }
 
     private fun getJetClassOrObject(element: PsiElement?, showErrors: Boolean, editor: Editor?): JetClassOrObject? = when (element) {
