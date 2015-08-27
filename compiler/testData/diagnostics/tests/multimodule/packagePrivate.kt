@@ -9,7 +9,7 @@ private val a = 1
 
 package p
 
-val b = a // same package, same module
+val b = <!INVISIBLE_MEMBER!>a<!> // same package, same module
 
 // MODULE: m2(m1)
 // FILE: c.kt
