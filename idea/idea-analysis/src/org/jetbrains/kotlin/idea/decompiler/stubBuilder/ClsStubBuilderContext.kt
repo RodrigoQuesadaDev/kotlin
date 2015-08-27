@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.storage.LockBasedStorageManager
 
 class ClsStubBuilderComponents(
         val classDataFinder: ClassDataFinder,
-        val annotationLoader: AnnotationAndConstantLoader<ClassId, Unit>
+        val annotationLoader: AnnotationAndConstantLoader<ClassId, Unit, ClassId>
 ) {
     fun createContext(
             nameResolver: NameResolver,
@@ -92,7 +92,7 @@ private fun ClsStubBuilderContext.child(nameResolver: NameResolver): ClsStubBuil
 class AnnotationLoaderForStubBuilder(
         kotlinClassFinder: KotlinClassFinder,
         errorReporter: ErrorReporter
-) : AbstractBinaryClassAnnotationAndConstantLoader<ClassId, Unit>(
+) : AbstractBinaryClassAnnotationAndConstantLoader<ClassId, Unit, ClassId>(
         LockBasedStorageManager.NO_LOCKS, kotlinClassFinder, errorReporter) {
 
     override fun loadClassAnnotations(
@@ -116,4 +116,10 @@ class AnnotationLoaderForStubBuilder(
         result.add(annotationClassId)
         return null
     }
+
+    override fun loadPropertyAnnotations(propertyAnnotations: List<ClassId>, fieldAnnotations: List<ClassId>): List<ClassId> {
+        return propertyAnnotations + fieldAnnotations
+    }
+
+    override fun transformAnnotations(annotations: List<ClassId>) = annotations
 }

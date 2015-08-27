@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.serialization.deserialization.ProtoContainer
 import org.jetbrains.kotlin.serialization.js.JsProtoBuf
 import org.jetbrains.kotlin.types.JetType
 
-public class AnnotationLoaderForKotlinJavaScriptStubBuilder() : AnnotationAndConstantLoader<ClassId, Unit> {
+public class AnnotationLoaderForKotlinJavaScriptStubBuilder() : AnnotationAndConstantLoader<ClassId, Unit, ClassId> {
 
     override fun loadClassAnnotations(
             classProto: ProtoBuf.Class, nameResolver: NameResolver
@@ -38,7 +38,6 @@ public class AnnotationLoaderForKotlinJavaScriptStubBuilder() : AnnotationAndCon
             nameResolver: NameResolver,
             kind: AnnotatedCallableKind
     ): List<ClassId> {
-        if (kind == AnnotatedCallableKind.PROPERTY_FIELD) return emptyList()
         return proto.getExtension(JsProtoBuf.callableAnnotation).orEmpty().map { nameResolver.getClassId(it.getId()) }
     }
 
