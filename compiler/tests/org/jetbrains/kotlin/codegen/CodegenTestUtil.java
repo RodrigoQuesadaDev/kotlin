@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.codegen.state.Progress;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.resolve.AnalyzingUtils;
 import org.jetbrains.kotlin.resolve.BindingTraceContext;
-import org.jetbrains.kotlin.resolve.lazy.JvmPackageMappingProvider;
+import org.jetbrains.kotlin.cli.jvm.compiler.JvmPackageFacadeProvider;
 import org.jetbrains.kotlin.resolve.lazy.JvmResolveUtil;
 import org.jetbrains.kotlin.test.JetTestUtils;
 import org.jetbrains.kotlin.utils.UtilsPackage;
@@ -54,7 +54,7 @@ public class CodegenTestUtil {
         AnalysisResult analysisResult = JvmResolveUtil.analyzeFilesWithJavaIntegrationAndCheckForErrors(
                 environment.getProject(),
                 files.getPsiFiles(),
-                new JvmPackageMappingProvider(environment)
+                new JvmPackageFacadeProvider(environment)
         );
         analysisResult.throwIfError();
         AnalyzingUtils.throwExceptionOnErrors(analysisResult.getBindingContext());

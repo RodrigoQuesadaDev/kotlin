@@ -16,12 +16,12 @@
 
 package org.jetbrains.kotlin.load.kotlin.reflect
 
-import org.jetbrains.kotlin.load.java.lazy.PackageMappingProvider
+import org.jetbrains.kotlin.descriptors.PackageFacadeProvider
 import org.jetbrains.kotlin.load.kotlin.ModuleMapping
 import org.jetbrains.kotlin.load.kotlin.PackageFacades
 import java.io.ByteArrayOutputStream
 
-class RuntimePackageMappingProvider(val moduleName: String, val classLoader : ClassLoader) : PackageMappingProvider {
+class RuntimePackageFacadeProvider(val moduleName: String, val classLoader : ClassLoader) : PackageFacadeProvider {
 
     val mapping: ModuleMapping by lazy {
         print("finding metainf for $moduleName")
@@ -45,7 +45,7 @@ class RuntimePackageMappingProvider(val moduleName: String, val classLoader : Cl
         }
     }
 
-    override fun findPackageMembers(packageName: String): List<String> {
+    override fun findPackageFacades(packageName: String): List<String> {
         print("finding $packageName")
         return mapping.package2MiniFacades.getOrElse (packageName, { PackageFacades("default") }).parts.toList()
     }
