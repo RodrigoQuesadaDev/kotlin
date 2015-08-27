@@ -402,12 +402,6 @@ class ArraysTest {
         assertEquals(listOf(true, false, true), arrayOf(true, false, true, true).slice(iter))
     }
 
-    test fun toSortedList() {
-        assertTrue(arrayOf<Long>().toSortedList().none())
-        assertEquals(listOf(1), arrayOf(1).toSortedList())
-        assertEquals(listOf("aab", "aba", "ac"), arrayOf("ac", "aab", "aba").toSortedList())
-    }
-
     test fun asIterable() {
         val arr1 = intArrayOf(1, 2, 3, 4, 5)
         val iter1 = arr1.asIterable()
@@ -768,5 +762,78 @@ class ArraysTest {
         assertEquals(list, arr.toList())
 
         assertEquals(Array(0, { "" }).asList(), emptyList<String>())
+    }
+
+    test fun sort() {
+        val intArr = intArrayOf(5, 2, 1, 9, 80, Int.MIN_VALUE, Int.MAX_VALUE)
+        intArr.sort()
+        assertArrayNotSameButEquals(intArrayOf(Int.MIN_VALUE, 1, 2, 5, 9, 80, Int.MAX_VALUE), intArr)
+
+        val longArr = longArrayOf(200, 2, 1, 4, 3, Long.MIN_VALUE, Long.MAX_VALUE)
+        longArr.sort()
+        assertArrayNotSameButEquals(longArrayOf(Long.MIN_VALUE, 1, 2, 3, 4, 200, Long.MAX_VALUE), longArr)
+
+        val charArr = charArrayOf('d', 'c', 'E', 'a', '\u0000', '\uFFFF')
+        charArr.sort()
+        assertArrayNotSameButEquals(charArrayOf('\u0000', 'E', 'a', 'c', 'd', '\uFFFF'), charArr)
+
+        val strArr = arrayOf("9", "80", "all", "Foo")
+        strArr.sort()
+        assertArrayNotSameButEquals(arrayOf("80", "9", "Foo", "all"), strArr)
+    }
+
+    test fun sorted() {
+        assertTrue(arrayOf<Long>().sorted().none())
+        assertEquals(listOf(1), arrayOf(1).sorted())
+
+        arrayOf("ac", "aD", "aba").let {
+            it.sorted().assertSorted { a, b -> a <= b }
+            it.sortedDescending().assertSorted { a, b -> a >= b }
+        }
+
+        intArrayOf(3, 7, 1).let {
+            it.sorted().assertSorted { a, b -> a <= b }
+            it.sortedDescending().assertSorted { a, b -> a >= b }
+        }
+
+        longArrayOf(1, Long.MIN_VALUE, Long.MAX_VALUE).let {
+            it.sorted().assertSorted { a, b -> a <= b }
+            it.sortedDescending().assertSorted { a, b -> a >= b }
+        }
+
+        charArrayOf('a', 'D', 'c').let {
+            it.sorted().assertSorted { a, b -> a <= b }
+            it.sortedDescending().assertSorted { a, b -> a >= b }
+        }
+
+        byteArrayOf(1, Byte.MAX_VALUE, Byte.MIN_VALUE).let {
+            it.sorted().assertSorted { a, b -> a <= b }
+            it.sortedDescending().assertSorted { a, b -> a >= b }
+        }
+
+        doubleArrayOf(Double.POSITIVE_INFINITY, 1.0, Double.MAX_VALUE).let {
+            it.sorted().assertSorted { a, b -> a <= b }
+            it.sortedDescending().assertSorted { a, b -> a >= b }
+        }
+    }
+
+    test fun sortedBy() {
+        val values = arrayOf("ac", "aD", "aba")
+        val indices = values.indices.toList().toIntArray()
+
+        assertEquals(listOf(1, 2, 0), indices.sortedBy { values[it] })
+    }
+
+    test fun sortedNullableBy() {
+        fun String.nullIfEmpty() = if (isEmpty()) null else this
+        arrayOf(null, "").let {
+            expect(listOf(null, "")) { it.sortedWith(nullsFirst(compareBy { it })) }
+            expect(listOf("", null)) { it.sortedWith(nullsLast(compareByDescending { it })) }
+            expect(listOf("", null)) { it.sortedWith(nullsLast(compareByDescending { it.nullIfEmpty() })) }
+        }
+    }
+
+    test fun sortedWith() {
+        assertEquals(listOf(3, 0, 4, 1, 5, 2), intArrayOf(0, 1, 2, 3, 4, 5).sortedWith( compareBy { it: Int -> it % 3 }.thenByDescending { it } ))
     }
 }
