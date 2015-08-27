@@ -85,8 +85,8 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import java.util.Collections
 import java.util.HashMap
 
-private val RECEIVER_NAME = "\$receiver"
-private val THIS_NAME = "this"
+internal val RECEIVER_NAME = "\$receiver"
+internal val THIS_NAME = "this"
 
 object KotlinEvaluationBuilder: EvaluatorBuilder {
     override fun build(codeFragment: PsiElement, position: SourcePosition?): ExpressionEvaluator {
@@ -466,7 +466,7 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
     }
 }
 
-private val template = """
+internal val template = """
 package packageForDebugger
 
 !IMPORT_LIST!
@@ -474,9 +474,9 @@ package packageForDebugger
 !FUNCTION!
 """
 
-private val packageInternalName = PackageClassUtils.getPackageClassInternalName(FqName("packageForDebugger"))
+internal val packageInternalName = PackageClassUtils.getPackageClassInternalName(FqName("packageForDebugger"))
 
-private fun createFileForDebugger(codeFragment: JetCodeFragment,
+internal fun createFileForDebugger(codeFragment: JetCodeFragment,
                                   extractedFunction: JetNamedFunction
 ): JetFile {
     var fileText = template.replace("!IMPORT_LIST!",
@@ -505,7 +505,7 @@ private fun createFileForDebugger(codeFragment: JetCodeFragment,
     return jetFile
 }
 
-private fun PsiElement.createFlexibleTypesFile(): JetFile {
+internal fun PsiElement.createFlexibleTypesFile(): JetFile {
     return createJetFile(
             "FLEXIBLE_TYPES.kt",
             """
@@ -515,7 +515,7 @@ private fun PsiElement.createFlexibleTypesFile(): JetFile {
     )
 }
 
-private fun PsiElement.createJetFile(fileName: String, fileText: String): JetFile {
+internal fun PsiElement.createJetFile(fileName: String, fileText: String): JetFile {
     // Not using JetPsiFactory because we need a virtual file attached to the JetFile
     val virtualFile = LightVirtualFile(fileName, JetLanguage.INSTANCE, fileText)
     virtualFile.charset = CharsetToolkit.UTF8_CHARSET
@@ -525,7 +525,7 @@ private fun PsiElement.createJetFile(fileName: String, fileText: String): JetFil
     return jetFile
 }
 
-private fun SuspendContext.getInvokePolicy(): Int {
+internal fun SuspendContext.getInvokePolicy(): Int {
     return if (suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD) ObjectReference.INVOKE_SINGLE_THREADED else 0
 }
 

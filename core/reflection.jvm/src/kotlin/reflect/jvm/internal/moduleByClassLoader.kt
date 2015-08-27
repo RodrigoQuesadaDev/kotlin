@@ -23,9 +23,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 // TODO: collect nulls periodically
-private val moduleByClassLoader: ConcurrentMap<WeakClassLoaderBox, WeakReference<RuntimeModuleData>> = ConcurrentHashMap()
+internal val moduleByClassLoader: ConcurrentMap<WeakClassLoaderBox, WeakReference<RuntimeModuleData>> = ConcurrentHashMap()
 
-private class WeakClassLoaderBox(classLoader: ClassLoader) {
+internal class WeakClassLoaderBox(classLoader: ClassLoader) {
     val ref: WeakReference<ClassLoader> = WeakReference(classLoader)
 
     // Identity hash code is saved because otherwise once the weak reference is GC'd we cannot compute it anymore
@@ -44,7 +44,7 @@ private class WeakClassLoaderBox(classLoader: ClassLoader) {
             ref.get()?.let { it.toString() } ?: "<null>"
 }
 
-private fun Class<*>.getOrCreateModule(): RuntimeModuleData {
+internal fun Class<*>.getOrCreateModule(): RuntimeModuleData {
     val classLoader = this.classLoader
     val key = WeakClassLoaderBox(classLoader)
 
