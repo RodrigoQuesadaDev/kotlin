@@ -17,27 +17,32 @@
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.descriptors.*
-import java.util.ArrayList
-import java.util.LinkedHashMap
+import java.util.*
 
-public class OverrideMethodsHandler : OverrideImplementMethodsHandler() {
-    override fun collectMethodsToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
+public class OverrideMembersHandler : OverrideImplementMembersHandler() {
+    override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
         val result = ArrayList<OverrideMemberChooserObject>()
         for (member in descriptor.unsubstitutedMemberScope.getAllDescriptors()) {
             if (member is CallableMemberDescriptor
                 && (member.kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE || member.kind == CallableMemberDescriptor.Kind.DELEGATION)) {
                 val overridden = member.overriddenDescriptors
-                if (overridden.any { it.modality == Modality.FINAL || it.visibility.normalize() == Visibilities.PRIVATE }) continue
+                if (overridden.any { it.modality == Modality.FINAL || Visibilities.isPrivate(it.visibility.normalize()) }) continue
 
-                val realSuperToImmediates = LinkedHashMap<CallableMemberDescriptor, MutableCollection<CallableMemberDescriptor>>()
+                class Data(
+                        val realSuper: CallableMemberDescriptor,
+                        val immediateSupers: MutableList<CallableMemberDescriptor> = SmartList()
+                )
+
+                val byOriginalRealSupers = LinkedHashMap<CallableMemberDescriptor, Data>()
                 for (immediateSuper in overridden) {
                     for (realSuper in toRealSupers(immediateSuper)) {
-                        realSuperToImmediates.getOrPut(realSuper) { ArrayList(1) }.add(immediateSuper)
+                        byOriginalRealSupers.getOrPut(realSuper.original) { Data(realSuper) }.immediateSupers.add(immediateSuper)
                     }
                 }
 
-                val realSupers = realSuperToImmediates.keySet()
+                val realSupers = byOriginalRealSupers.values().map { it.realSuper }
                 val nonAbstractRealSupers = realSupers.filter { it.modality != Modality.ABSTRACT }
                 val realSupersToUse = if (nonAbstractRealSupers.isNotEmpty()) {
                     nonAbstractRealSupers
@@ -47,7 +52,7 @@ public class OverrideMethodsHandler : OverrideImplementMethodsHandler() {
                 }
 
                 for (realSuper in realSupersToUse) {
-                    val immediateSupers = realSuperToImmediates[realSuper]!!
+                    val immediateSupers = byOriginalRealSupers[realSuper.original]!!.immediateSupers
                     assert(immediateSupers.isNotEmpty())
 
                     val immediateSuperToUse = if (immediateSupers.size() == 1) {
@@ -56,7 +61,15 @@ public class OverrideMethodsHandler : OverrideImplementMethodsHandler() {
                     else {
                         immediateSupers.singleOrNull { (it.containingDeclaration as? ClassDescriptor)?.kind == ClassKind.CLASS } ?: immediateSupers.first()
                     }
-                    result.add(OverrideMemberChooserObject.create(project, realSuper, immediateSuperToUse))
+
+                    val bodyType = if (immediateSuperToUse.modality == Modality.ABSTRACT)
+                        OverrideMemberChooserObject.BodyType.EMPTY
+                    else if (realSupersToUse.size() == 1)
+                        OverrideMemberChooserObject.BodyType.SUPER
+                    else
+                        OverrideMemberChooserObject.BodyType.QUALIFIED_SUPER
+
+                    result.add(OverrideMemberChooserObject.create(project, realSuper, immediateSuperToUse, bodyType))
                 }
             }
         }
@@ -69,10 +82,10 @@ public class OverrideMethodsHandler : OverrideImplementMethodsHandler() {
         }
         val overridden = immediateSuper.overriddenDescriptors
         assert(overridden.isNotEmpty())
-        return overridden.flatMap { toRealSupers(it) }.toSet()
+        return overridden.flatMap { toRealSupers(it) }.distinctBy { it.original }
     }
 
     override fun getChooserTitle() = "Override Members"
 
-    override fun getNoMethodsFoundHint() = "No methods to override have been found"
+    override fun getNoMembersFoundHint() = "No members to override have been found"
 }

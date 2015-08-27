@@ -35,16 +35,16 @@ import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.renderer.*
-import java.util.ArrayList
+import java.util.*
 
-public abstract class OverrideImplementMethodsHandler : LanguageCodeInsightActionHandler {
+public abstract class OverrideImplementMembersHandler : LanguageCodeInsightActionHandler {
 
-    public fun collectMethodsToGenerate(classOrObject: JetClassOrObject): Collection<OverrideMemberChooserObject> {
+    public fun collectMembersToGenerate(classOrObject: JetClassOrObject): Collection<OverrideMemberChooserObject> {
         val descriptor = classOrObject.resolveToDescriptor() as? ClassDescriptor ?: return emptySet()
-        return collectMethodsToGenerate(descriptor, classOrObject.project)
+        return collectMembersToGenerate(descriptor, classOrObject.project)
     }
 
-    protected abstract fun collectMethodsToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject>
+    protected abstract fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject>
 
     private fun showOverrideImplementChooser(project: Project, members: Array<OverrideMemberChooserObject>): MemberChooser<OverrideMemberChooserObject>? {
         val chooser = MemberChooser(members, true, true, project)
@@ -63,15 +63,15 @@ public abstract class OverrideImplementMethodsHandler : LanguageCodeInsightActio
         return classOrObject != null
     }
 
-    protected abstract fun getNoMethodsFoundHint(): String
+    protected abstract fun getNoMembersFoundHint(): String
 
     public fun invoke(project: Project, editor: Editor, file: PsiFile, implementAll: Boolean) {
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
         val classOrObject = elementAtCaret?.getNonStrictParentOfType<JetClassOrObject>()!!
 
-        val members = collectMethodsToGenerate(classOrObject)
+        val members = collectMembersToGenerate(classOrObject)
         if (members.isEmpty() && !implementAll) {
-            HintManager.getInstance().showErrorHint(editor, getNoMethodsFoundHint())
+            HintManager.getInstance().showErrorHint(editor, getNoMembersFoundHint())
             return
         }
 
@@ -189,67 +189,66 @@ public abstract class OverrideImplementMethodsHandler : LanguageCodeInsightActio
             for (selectedElement in selectedElements) {
                 val descriptor = selectedElement.immediateSuper
                 when (descriptor) {
-                    is SimpleFunctionDescriptor -> overridingMembers.add(overrideFunction(classOrObject, descriptor))
-                    is PropertyDescriptor -> overridingMembers.add(overrideProperty(classOrObject, descriptor))
+                    is SimpleFunctionDescriptor -> overridingMembers.add(overrideFunction(classOrObject, descriptor, selectedElement.bodyType))
+                    is PropertyDescriptor -> overridingMembers.add(overrideProperty(classOrObject, descriptor, selectedElement.bodyType))
                     else -> error("Unknown member to override: $descriptor")
                 }
             }
             return overridingMembers
         }
 
-        private fun overrideProperty(classOrObject: JetClassOrObject, descriptor: PropertyDescriptor): JetElement {
+        private fun overrideProperty(classOrObject: JetClassOrObject, descriptor: PropertyDescriptor, bodyType: OverrideMemberChooserObject.BodyType): JetElement {
             val newDescriptor = descriptor.copy(descriptor.containingDeclaration, Modality.OPEN, descriptor.visibility,
                                                 descriptor.kind, /* copyOverrides = */ true) as PropertyDescriptor
             newDescriptor.addOverriddenDescriptor(descriptor)
 
-            val body = StringBuilder()
-            body.append("\nget()")
-            body.append(" = ")
-            body.append(generateUnsupportedOrSuperCall(classOrObject, descriptor))
-            if (descriptor.isVar) {
-                body.append("\nset(value) {}")
+            val body = StringBuilder {
+                append("\nget()")
+                append(" = ")
+                append(generateUnsupportedOrSuperCall(descriptor, bodyType))
+                if (descriptor.isVar) {
+                    append("\nset(value) {}")
+                }
             }
             return JetPsiFactory(classOrObject.project).createProperty(OVERRIDE_RENDERER.render(newDescriptor) + body)
         }
 
-        private fun overrideFunction(classOrObject: JetClassOrObject, descriptor: FunctionDescriptor): JetNamedFunction {
+        private fun overrideFunction(classOrObject: JetClassOrObject, descriptor: FunctionDescriptor, bodyType: OverrideMemberChooserObject.BodyType): JetNamedFunction {
             val newDescriptor = descriptor.copy(descriptor.containingDeclaration, Modality.OPEN, descriptor.visibility,
                                                 descriptor.kind, /* copyOverrides = */ true)
             newDescriptor.addOverriddenDescriptor(descriptor)
 
             val returnType = descriptor.returnType
             val returnsNotUnit = returnType != null && !KotlinBuiltIns.isUnit(returnType)
-            val isAbstract = descriptor.modality == Modality.ABSTRACT
 
-            val delegation = generateUnsupportedOrSuperCall(classOrObject, descriptor)
+            val delegation = generateUnsupportedOrSuperCall(descriptor, bodyType)
 
-            val body = "{" + (if (returnsNotUnit && !isAbstract) "return " else "") + delegation + "}"
+            val body = "{" + (if (returnsNotUnit && bodyType != OverrideMemberChooserObject.BodyType.EMPTY) "return " else "") + delegation + "}"
 
             return JetPsiFactory(classOrObject.project).createFunction(OVERRIDE_RENDERER.render(newDescriptor) + body)
         }
 
-        private fun generateUnsupportedOrSuperCall(classOrObject: JetClassOrObject, descriptor: CallableMemberDescriptor): String {
-            val isAbstract = descriptor.modality == Modality.ABSTRACT
-            if (isAbstract) {
+        private fun generateUnsupportedOrSuperCall(descriptor: CallableMemberDescriptor, bodyType: OverrideMemberChooserObject.BodyType): String {
+            if (bodyType == OverrideMemberChooserObject.BodyType.EMPTY) {
                 return "throw UnsupportedOperationException()"
             }
             else {
-                val builder = StringBuilder()
-                builder.append("super")
-                if (classOrObject.getDelegationSpecifiers().size() > 1) {
-                    builder.append("<").append(descriptor.containingDeclaration.escapedName()).append(">")
-                }
-                builder.append(".").append(descriptor.escapedName())
-
-                if (descriptor is FunctionDescriptor) {
-                    val paramTexts = descriptor.valueParameters.map {
-                        val renderedName = it.escapedName()
-                        if (it.varargElementType != null) "*$renderedName" else renderedName
+                return StringBuilder {
+                    append("super")
+                    if (bodyType == OverrideMemberChooserObject.BodyType.QUALIFIED_SUPER) {
+                        val superClassFqName = IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(descriptor.containingDeclaration as ClassifierDescriptor)
+                        append("<").append(superClassFqName).append(">")
                     }
-                    paramTexts.joinTo(builder, prefix="(", postfix=")")
-                }
+                    append(".").append(descriptor.escapedName())
 
-                return builder.toString()
+                    if (descriptor is FunctionDescriptor) {
+                        val paramTexts = descriptor.valueParameters.map {
+                            val renderedName = it.escapedName()
+                            if (it.varargElementType != null) "*$renderedName" else renderedName
+                        }
+                        paramTexts.joinTo(this, prefix="(", postfix=")")
+                    }
+                }.toString()
             }
         }
 

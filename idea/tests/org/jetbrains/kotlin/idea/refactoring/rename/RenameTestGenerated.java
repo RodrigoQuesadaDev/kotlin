@@ -311,6 +311,18 @@ public class RenameTestGenerated extends AbstractRenameTest {
         doTest(fileName);
     }
 
+    @TestMetadata("renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test")
+    public void testRenameKotlinPrimaryConstructorProperty_RenameKotlinPrimaryConstructorProperty() throws Exception {
+        String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/rename/renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test");
+        doTest(fileName);
+    }
+
+    @TestMetadata("renameKotlinPrimaryConstructorPropertyFromOverride/renameKotlinPrimaryConstructorPropertyFromOverride.test")
+    public void testRenameKotlinPrimaryConstructorPropertyFromOverride_RenameKotlinPrimaryConstructorPropertyFromOverride() throws Exception {
+        String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/rename/renameKotlinPrimaryConstructorPropertyFromOverride/renameKotlinPrimaryConstructorPropertyFromOverride.test");
+        doTest(fileName);
+    }
+
     @TestMetadata("renameKotlinStaticMethod/renameKotlinStaticMethod.test")
     public void testRenameKotlinStaticMethod_RenameKotlinStaticMethod() throws Exception {
         String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/rename/renameKotlinStaticMethod/renameKotlinStaticMethod.test");

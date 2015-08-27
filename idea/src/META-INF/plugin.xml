@@ -447,8 +447,8 @@
     <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.filter.KotlinSyntheticTypeComponentProvider"/>
     <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinBreakpointHandlerFactory"/>
 
-    <codeInsight.implementMethod language="jet" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMethodsHandler"/>
-    <codeInsight.overrideMethod language="jet" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMethodsHandler"/>
+    <codeInsight.implementMethod language="jet" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>
+    <codeInsight.overrideMethod language="jet" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMembersHandler"/>
 
     <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>
     <framework.type implementation="org.jetbrains.kotlin.idea.framework.JSFrameworkType"/>
@@ -724,6 +724,11 @@
 
     <intentionAction>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.RemoveExplicitSuperQualifierIntention</className>
       <category>Kotlin</category>
     </intentionAction>
 
@@ -1016,6 +1021,13 @@
 
       <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsInspection"
         displayName="Type arguments are unnecessary"
+        groupName="Kotlin"
+        enabledByDefault="true"
+        level="WEAK WARNING"
+        />
+
+      <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveExplicitSuperQualifierInspection"
+        displayName="Supertype qualification is unnecessary"
         groupName="Kotlin"
         enabledByDefault="true"
         level="WEAK WARNING"
