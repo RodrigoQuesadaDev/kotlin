@@ -237,10 +237,11 @@ public class UnusedSymbolInspection : AbstractKotlinInspection() {
             }
         }
 
-        return hasReferences(declaration, useScope) ||
-               hasOverrides(declaration, useScope) ||
-               (declaration is JetObjectDeclaration && declaration.isCompanion() &&
-                declaration.getBody()?.declarations?.isNotEmpty() == true)
+        return (declaration is JetObjectDeclaration && declaration.isCompanion() &&
+                declaration.getBody()?.declarations?.isNotEmpty() == true) ||
+               hasReferences(declaration, useScope) ||
+               hasOverrides(declaration, useScope)
+
     }
 
     private fun hasReferences(declaration: JetNamedDeclaration, useScope: SearchScope): Boolean {
