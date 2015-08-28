@@ -576,7 +576,7 @@ public class DescriptorUtils {
     }
 
     @Nullable
-    public static Object getContainingFile(@NotNull DeclarationDescriptor descriptor) {
+    public static SourceFileId getContainingFile(@NotNull DeclarationDescriptor descriptor) {
         if (descriptor instanceof PropertySetterDescriptor) {
             descriptor = ((PropertySetterDescriptor) descriptor).getCorrespondingProperty();
         }

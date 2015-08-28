@@ -17,17 +17,25 @@
 package org.jetbrains.kotlin.load.java.components
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.descriptors.SourceFileId
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElementFactory
 import org.jetbrains.kotlin.load.java.structure.JavaElement
 import org.jetbrains.kotlin.load.java.structure.impl.JavaElementImpl
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
+import org.jetbrains.kotlin.resolve.source.SourcePsiFileId
 
 private class JavaSourceElementImpl(override val javaElement: JavaElement) : PsiSourceElement, JavaSourceElement {
     override val psi: PsiElement?
         get() = (javaElement as JavaElementImpl<*>).getPsi()
 
-    override fun getContainingFile(): Any? = psi?.containingFile
+    override fun getContainingFile(): SourceFileId? {
+        psi?.containingFile?.let {
+            return SourcePsiFileId(it)
+        }
+
+        return null
+    }
 }
 
 public class JavaSourceElementFactoryImpl : JavaSourceElementFactory {

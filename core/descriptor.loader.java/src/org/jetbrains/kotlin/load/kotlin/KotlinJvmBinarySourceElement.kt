@@ -17,7 +17,8 @@
 package org.jetbrains.kotlin.load.kotlin
 
 import org.jetbrains.kotlin.descriptors.SourceElement
+import org.jetbrains.kotlin.descriptors.SourceFileId
 
 public class KotlinJvmBinarySourceElement(public val binaryClass: KotlinJvmBinaryClass) : SourceElement {
-    override fun getContainingFile(): Any? = null
+    override fun getContainingFile(): SourceFileId? = null
 }

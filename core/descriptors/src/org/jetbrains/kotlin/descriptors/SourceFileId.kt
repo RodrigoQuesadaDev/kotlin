@@ -14,24 +14,8 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.descriptors;
+package org.jetbrains.kotlin.descriptors
 
-import org.jetbrains.annotations.Nullable;
-
-public interface SourceElement {
-    SourceElement NO_SOURCE = new SourceElement() {
-        @Override
-        public String toString() {
-            return "NO_SOURCE";
-        }
-
-        @Nullable
-        @Override
-        public SourceFileId getContainingFile() {
-            return null;
-        }
-    };
-
-    @Nullable
-    SourceFileId getContainingFile();
+public interface SourceFileId {
+    fun equalsTo(other: SourceFileId): Boolean
 }

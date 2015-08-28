@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.load.java.components
 
+import org.jetbrains.kotlin.descriptors.SourceFileId
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElementFactory
 import org.jetbrains.kotlin.load.java.structure.JavaElement
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.load.java.structure.reflect.ReflectJavaElement
 
 public object RuntimeSourceElementFactory : JavaSourceElementFactory {
     private class RuntimeSourceElement(override val javaElement: ReflectJavaElement) : JavaSourceElement {
-        override fun getContainingFile(): Any? = null
+        override fun getContainingFile(): SourceFileId? = null
     }
 
     override fun source(javaElement: JavaElement) = RuntimeSourceElement(javaElement as ReflectJavaElement)

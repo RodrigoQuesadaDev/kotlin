@@ -38,10 +38,10 @@ public class Visibilities {
         @Override
         public boolean isVisible(@NotNull ReceiverValue receiver, @NotNull DeclarationDescriptorWithVisibility what, @NotNull DeclarationDescriptor from) {
             if (DescriptorUtils.isTopLevelDeclaration(what)) {
-                Object whatContainingFile = DescriptorUtils.getContainingFile(what);
-                Object fromContainingFile = DescriptorUtils.getContainingFile(from);
+                SourceFileId whatContainingFile = DescriptorUtils.getContainingFile(what);
+                SourceFileId fromContainingFile = DescriptorUtils.getContainingFile(from);
                 if (whatContainingFile != null && fromContainingFile != null) {
-                    return whatContainingFile.equals(fromContainingFile);
+                    return whatContainingFile.equalsTo(fromContainingFile);
                 }
             }
 
