@@ -285,6 +285,12 @@ public class BlackBoxWithJavaCodegenTestGenerated extends AbstractBlackBoxCodege
             doTestWithJava(fileName);
         }
 
+        @TestMetadata("declaredVsInheritedFunctions")
+        public void testDeclaredVsInheritedFunctions() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithJava/reflection/declaredVsInheritedFunctions/");
+            doTestWithJava(fileName);
+        }
+
         @TestMetadata("functionReferenceErasedToKFunction")
         public void testFunctionReferenceErasedToKFunction() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithJava/reflection/functionReferenceErasedToKFunction/");
@@ -342,6 +348,18 @@ public class BlackBoxWithJavaCodegenTestGenerated extends AbstractBlackBoxCodege
         @TestMetadata("parametersHaveNoNames")
         public void testParametersHaveNoNames() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithJava/reflection/parametersHaveNoNames/");
+            doTestWithJava(fileName);
+        }
+
+        @TestMetadata("platformTypeNotEqualToKotlinType")
+        public void testPlatformTypeNotEqualToKotlinType() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithJava/reflection/platformTypeNotEqualToKotlinType/");
+            doTestWithJava(fileName);
+        }
+
+        @TestMetadata("platformTypeToString")
+        public void testPlatformTypeToString() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithJava/reflection/platformTypeToString/");
             doTestWithJava(fileName);
         }
 

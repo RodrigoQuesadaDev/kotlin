@@ -18,10 +18,9 @@ package kotlin.reflect.jvm.internal
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.DeclarationDescriptorVisitorEmptyBodies
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.structure.reflect.classId
-import org.jetbrains.kotlin.load.java.structure.reflect.classLoader
 import org.jetbrains.kotlin.load.java.structure.reflect.createArrayType
+import org.jetbrains.kotlin.load.java.structure.reflect.safeClassLoader
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.scopes.JetScope
@@ -42,14 +41,13 @@ abstract class KDeclarationContainerImpl : ClassBasedDeclarationContainer {
         jClass.getOrCreateModule()
     }
 
-    abstract val scope: JetScope
-
     abstract val constructorDescriptors: Collection<ConstructorDescriptor>
 
-    override val members: Collection<KCallable<*>>
-        get() = getMembers(declaredOnly = false, nonExtensions = true, extensions = true).toList()
+    abstract fun getProperties(name: Name): Collection<PropertyDescriptor>
 
-    fun getMembers(declaredOnly: Boolean, nonExtensions: Boolean, extensions: Boolean): Sequence<KCallable<*>> {
+    abstract fun getFunctions(name: Name): Collection<FunctionDescriptor>
+
+    fun getMembers(scope: JetScope, declaredOnly: Boolean, nonExtensions: Boolean, extensions: Boolean): Sequence<KCallable<*>> {
         val visitor = object : DeclarationDescriptorVisitorEmptyBodies<KCallable<*>?, Unit>() {
             private fun skipCallable(descriptor: CallableMemberDescriptor): Boolean {
                 if (declaredOnly && !descriptor.getKind().isReal()) return true
@@ -105,8 +103,7 @@ abstract class KDeclarationContainerImpl : ClassBasedDeclarationContainer {
     }
 
     fun findPropertyDescriptor(name: String, signature: String): PropertyDescriptor {
-        val properties = scope
-                .getProperties(Name.guess(name), NoLookupLocation.FROM_REFLECTION)
+        val properties = getProperties(Name.guess(name))
                 .filter { descriptor ->
                     descriptor is PropertyDescriptor &&
                     RuntimeTypeMapper.mapPropertySignature(descriptor).asString() == signature
@@ -120,11 +117,11 @@ abstract class KDeclarationContainerImpl : ClassBasedDeclarationContainer {
             )
         }
 
-        return properties.single() as PropertyDescriptor
+        return properties.single()
     }
 
     fun findFunctionDescriptor(name: String, signature: String): FunctionDescriptor {
-        val functions = (if (name == "<init>") constructorDescriptors.toList() else scope.getFunctions(Name.guess(name), NoLookupLocation.FROM_REFLECTION))
+        val functions = (if (name == "<init>") constructorDescriptors.toList() else getFunctions(Name.guess(name)))
                 .filter { descriptor ->
                     RuntimeTypeMapper.mapSignature(descriptor).asString() == signature
                 }
@@ -184,7 +181,7 @@ abstract class KDeclarationContainerImpl : ClassBasedDeclarationContainer {
     }
 
     private fun loadParameterTypes(nameResolver: NameResolver, signature: JvmProtoBuf.JvmMethodSignature): Array<Class<*>> {
-        val classLoader = jClass.classLoader
+        val classLoader = jClass.safeClassLoader
         return signature.getParameterTypeList().map { jvmType ->
             loadJvmType(jvmType, nameResolver, classLoader)
         }.toTypedArray()
@@ -221,7 +218,7 @@ abstract class KDeclarationContainerImpl : ClassBasedDeclarationContainer {
         val implClassName = nameResolver.getName(proto.getExtension(JvmProtoBuf.implClassName))
         // TODO: store fq name of impl class name in jvm_descriptors.proto
         val classId = ClassId(jClass.classId.getPackageFqName(), implClassName)
-        return jClass.classLoader.loadClass(classId.asSingleFqName().asString())
+        return jClass.safeClassLoader.loadClass(classId.asSingleFqName().asString())
     }
 
     private fun loadJvmType(
