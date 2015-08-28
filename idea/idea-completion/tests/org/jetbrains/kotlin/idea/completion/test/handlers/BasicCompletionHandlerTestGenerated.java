@@ -202,6 +202,24 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
             JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/idea-completion/testData/handlers/basic/highOrderFunctions"), Pattern.compile("^(.+)\\.kt$"), true);
         }
 
+        @TestMetadata("ContextVariable.kt")
+        public void testContextVariable() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/highOrderFunctions/ContextVariable.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("ContextVariableDot.kt")
+        public void testContextVariableDot() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/highOrderFunctions/ContextVariableDot.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("ContextVariableTypeArgsNeeded.kt")
+        public void testContextVariableTypeArgsNeeded() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/highOrderFunctions/ContextVariableTypeArgsNeeded.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("ForceParenthesisForTabChar.kt")
         public void testForceParenthesisForTabChar() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/highOrderFunctions/ForceParenthesisForTabChar.kt");
@@ -253,6 +271,18 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
         public void testInsertFunctionWithSingleParameterWithBrace() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithBrace.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("OptionalParameters1.kt")
+        public void testOptionalParameters1() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/highOrderFunctions/OptionalParameters1.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("OptionalParameters2.kt")
+        public void testOptionalParameters2() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/highOrderFunctions/OptionalParameters2.kt");
             doTest(fileName);
         }
 
@@ -448,6 +478,18 @@ public class BasicCompletionHandlerTestGenerated extends AbstractBasicCompletion
         @TestMetadata("NotAllTypeArgumentsFromParameters.kt")
         public void testNotAllTypeArgumentsFromParameters() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/typeArgsForCall/NotAllTypeArgumentsFromParameters.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("ReplaceByTab1.kt")
+        public void testReplaceByTab1() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/typeArgsForCall/ReplaceByTab1.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("ReplaceByTab2.kt")
+        public void testReplaceByTab2() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/idea-completion/testData/handlers/basic/typeArgsForCall/ReplaceByTab2.kt");
             doTest(fileName);
         }
 

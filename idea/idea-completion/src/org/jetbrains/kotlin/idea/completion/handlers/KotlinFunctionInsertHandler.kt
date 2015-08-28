@@ -35,13 +35,20 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.JetType
 
-data class GenerateLambdaInfo(val lambdaType: JetType, val explicitParameters: Boolean)
+class GenerateLambdaInfo(val lambdaType: JetType, val explicitParameters: Boolean)
 
 class KotlinFunctionInsertHandler(
-        val needTypeArguments: Boolean,
-        val needValueArguments: Boolean,
+        val inputTypeArguments: Boolean,
+        val inputValueArguments: Boolean,
+        val argumentText: String = "",
         val lambdaInfo: GenerateLambdaInfo? = null
 ) : KotlinCallableInsertHandler() {
+
+    init {
+        if (lambdaInfo != null) {
+            assert(argumentText == "")
+        }
+    }
 
     public override fun handleInsert(context: InsertionContext, item: LookupElement) {
         super.handleInsert(context, item)
@@ -66,7 +73,7 @@ class KotlinFunctionInsertHandler(
                 context.getEditor().getCaretModel().moveToOffset(tailOffset + 1)
             }
 
-            else -> addBrackets(context, element)
+            else -> addArguments(context, element)
         }
     }
 
@@ -76,7 +83,7 @@ class KotlinFunctionInsertHandler(
         return parent is JetSimpleNameExpression && grandParent is JetBinaryExpression && parent == grandParent.getOperationReference()
     }
 
-    private fun addBrackets(context : InsertionContext, offsetElement : PsiElement) {
+    private fun addArguments(context : InsertionContext, offsetElement : PsiElement) {
         val completionChar = context.getCompletionChar()
         if (completionChar == '(') { //TODO: more correct behavior related to braces type
             context.setAddCompletionChar(false)
@@ -93,7 +100,7 @@ class KotlinFunctionInsertHandler(
         val openingBracket = if (insertLambda) '{' else '('
         val closingBracket = if (insertLambda) '}' else ')'
 
-        var insertTypeArguments = needTypeArguments && (completionChar == '\n' || completionChar == '\r')
+        var insertTypeArguments = inputTypeArguments && (completionChar == '\n' || completionChar == '\r' || completionChar == Lookup.REPLACE_SELECT_CHAR)
 
         if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
             val offset1 = chars.skipSpaces(offset)
@@ -153,27 +160,33 @@ class KotlinFunctionInsertHandler(
             closeBracketOffset = chars.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)!!
         }
 
+        if (insertLambda && lambdaInfo!!.explicitParameters) {
+            insertLambdaTemplate(context, TextRange(openingBracketOffset, closeBracketOffset!! + 1), lambdaInfo!!.lambdaType)
+            return
+        }
+
+        document.insertString(openingBracketOffset + 1, argumentText)
+        if (closeBracketOffset != null) {
+            closeBracketOffset += argumentText.length()
+        }
+
         if (!insertTypeArguments) {
             if (shouldPlaceCaretInBrackets(completionChar) || closeBracketOffset == null) {
                 editor.caretModel.moveToOffset(openingBracketOffset + 1 + inBracketsShift)
-                AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+                if (!insertLambda) {
+                    AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+                }
             }
             else {
                 editor.caretModel.moveToOffset(closeBracketOffset + 1)
             }
-        }
-
-        PsiDocumentManager.getInstance(project).commitDocument(document)
-
-        if (insertLambda && lambdaInfo!!.explicitParameters) {
-            insertLambdaTemplate(context, TextRange(openingBracketOffset, closeBracketOffset!! + 1), lambdaInfo!!.lambdaType)
         }
     }
 
     private fun shouldPlaceCaretInBrackets(completionChar: Char): Boolean {
         if (completionChar == ',' || completionChar == '.' || completionChar == '=') return false
         if (completionChar == '(') return true
-        return needValueArguments
+        return inputValueArguments || lambdaInfo != null
     }
 
     private fun isInsertSpacesInOneLineFunctionEnabled(project: Project)

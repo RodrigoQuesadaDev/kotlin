@@ -141,6 +141,13 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
     protected val receiversData: ReferenceVariantsHelper.ReceiversData? = nameExpression?.let { referenceVariantsHelper.getReferenceVariantsReceivers(it) }
 
     protected val lookupElementFactory: LookupElementFactory = run {
+        val contextType = if (expression?.getParent() is JetSimpleNameStringTemplateEntry)
+            LookupElementFactory.ContextType.STRING_TEMPLATE_AFTER_DOLLAR
+        else if (receiversData?.callType == CallType.INFIX)
+            LookupElementFactory.ContextType.INFIX_CALL
+        else
+            LookupElementFactory.ContextType.NORMAL
+
         var receiverTypes = emptyList<JetType>()
         if (receiversData != null) {
             val dataFlowInfo = bindingContext.getDataFlowInfo(expression)
@@ -161,19 +168,19 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
             }
         }
 
-        LookupElementFactory(resolutionFacade, receiverTypes, { expectedInfos })
-    }
+        val contextVariablesProvider = {
+            nameExpression?.let {
+                referenceVariantsHelper.getReferenceVariants(it, DescriptorKindFilter.VARIABLES, { true }, explicitReceiverData = null)
+                        .map { it as VariableDescriptor }
+            } ?: emptyList()
+        }
 
-    private val collectorContext = if (expression?.getParent() is JetSimpleNameStringTemplateEntry)
-        LookupElementsCollector.Context.STRING_TEMPLATE_AFTER_DOLLAR
-    else if (receiversData?.callType == CallType.INFIX)
-        LookupElementsCollector.Context.INFIX_CALL
-    else
-        LookupElementsCollector.Context.NORMAL
+        LookupElementFactory(resolutionFacade, receiverTypes, contextType, inDescriptor, InsertHandlerProvider { expectedInfos }, contextVariablesProvider)
+    }
 
     // LookupElementsCollector instantiation is deferred because virtual call to createSorter uses data from derived classes
     protected val collector: LookupElementsCollector by lazy {
-        LookupElementsCollector(prefixMatcher, parameters, resultSet, resolutionFacade, lookupElementFactory, createSorter(), inDescriptor, collectorContext)
+        LookupElementsCollector(prefixMatcher, parameters, resultSet, lookupElementFactory, createSorter())
     }
 
     protected val originalSearchScope: GlobalSearchScope = getResolveScope(parameters.getOriginalFile() as JetFile)
@@ -328,7 +335,8 @@ abstract class CompletionSession(protected val configuration: CompletionSessionC
     }
 
     private fun Collection<CallableDescriptor>.filterShadowedNonImported(): Collection<CallableDescriptor> {
-        return ShadowedDeclarationsFilter(bindingContext, resolutionFacade).filterNonImported(this, referenceVariants, nameExpression!!)
+        val explicitReceiverData = ReferenceVariantsHelper.getExplicitReceiverData(nameExpression!!)
+        return ShadowedDeclarationsFilter(bindingContext, resolutionFacade, nameExpression, explicitReceiverData).filterNonImported(this, referenceVariants)
     }
 
     protected fun addAllClasses(kindFilter: (ClassKind) -> Boolean) {
