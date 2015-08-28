@@ -25,12 +25,13 @@ import org.jetbrains.kotlin.asJava.KotlinLightClass
 import org.jetbrains.kotlin.asJava.KotlinLightClassForExplicitDeclaration
 import org.jetbrains.kotlin.asJava.KotlinLightClassForPackage
 import org.jetbrains.kotlin.idea.JetBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.references.JetSimpleNameReference
 import org.jetbrains.kotlin.psi.JetClassOrObject
 import org.jetbrains.kotlin.psi.JetConstructor
 import org.jetbrains.kotlin.psi.JetObjectDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 public class RenameKotlinClassProcessor : RenameKotlinPsiProcessor() {
     override fun canProcessElement(element: PsiElement): Boolean {
@@ -57,25 +58,17 @@ public class RenameKotlinClassProcessor : RenameKotlinPsiProcessor() {
 
     override fun findReferences(element: PsiElement): Collection<PsiReference> {
         if (element is JetObjectDeclaration && element.isCompanion()) {
-            return super.findReferences(element).filter { !it.isCompanionObjectClassReference(element) }
+            return super.findReferences(element).filter { !it.isCompanionObjectClassReference() }
         }
         return super.findReferences(element)
     }
 
-    private fun PsiReference.isCompanionObjectClassReference(companionObject: JetObjectDeclaration): Boolean {
+    private fun PsiReference.isCompanionObjectClassReference(): Boolean {
         if (this !is JetSimpleNameReference) {
             return false
         }
-        val name = companionObject.name
-        if (canonicalText != name) {
-            return true
-        }
-        val containingClass = companionObject.getStrictParentOfType<JetClassOrObject>() ?: return false
-        if (containingClass.name == companionObject.name) {
-            val qualifiedExpr = element.getQualifiedExpressionForSelector()
-            return qualifiedExpr == null || qualifiedExpr.receiverExpression.text != companionObject.name
-        }
-        return false
+        val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+        return bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, element] != null
     }
 
     private fun getJetClassOrObject(element: PsiElement?, showErrors: Boolean, editor: Editor?): JetClassOrObject? = when (element) {
