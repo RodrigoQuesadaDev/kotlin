@@ -1,3 +1,5 @@
+// !DIAGNOSTICS: -UNUSED_VARIABLE
+
 //FILE:file1.kt
 package a
 
@@ -10,7 +12,7 @@ private var x: Int = 10
 private fun foo() {}
 
 private fun bar() {
-    val <!UNUSED_VARIABLE!>y<!> = x
+    val y = x
     x = 20
 }
 
@@ -26,12 +28,12 @@ fun test() {
     y.<!INVISIBLE_MEMBER!>bar<!>()
     <!INVISIBLE_MEMBER!>foo<!>()
 
-    val <!UNUSED_VARIABLE!>u<!> : <!INVISIBLE_REFERENCE!>A<!> = <!INVISIBLE_MEMBER!>A<!>()
+    val u : <!INVISIBLE_REFERENCE!>A<!> = <!INVISIBLE_MEMBER!>A<!>()
 
-    val <!UNUSED_VARIABLE!>z<!> = <!INVISIBLE_MEMBER!>x<!>
+    val z = <!INVISIBLE_MEMBER!>x<!>
     <!INVISIBLE_MEMBER!>x<!> = 30
 
-    val <!UNUSED_VARIABLE!>po<!> = <!INVISIBLE_MEMBER!>PO<!>
+    val po = <!INVISIBLE_MEMBER!>PO<!>
 }
 
 class B : <!INVISIBLE_REFERENCE, INVISIBLE_MEMBER!>A<!>() {}
@@ -39,7 +41,7 @@ class B : <!INVISIBLE_REFERENCE, INVISIBLE_MEMBER!>A<!>() {}
 class Q {
     class W {
         fun foo() {
-            val <!UNUSED_VARIABLE!>y<!> = makeA() //assure that 'makeA' is visible
+            val y = makeA() //assure that 'makeA' is visible
         }
     }
 }
