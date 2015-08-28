@@ -487,20 +487,22 @@ fun filtering(): List<GenericFunction> {
 
     templates add f("slice(indices: IntRange)") {
         only(Strings, Lists, ArraysOfPrimitives, ArraysOfObjects)
-        doc { "Returns a list containing elements at specified [indices]." }
+        doc { "Returns a list containing elements at indices in the specified [indices] range." }
         returns("List<T>")
-        body {
+        body(Lists) {
             """
             if (indices.isEmpty()) return listOf()
-            val list = ArrayList<T>(indices.end - indices.start + 1)
-            for (index in indices) {
-                list.add(get(index))
-            }
-            return list
+            return this.subList(indices.start, indices.end + 1).toList()
+            """
+        }
+        body(ArraysOfPrimitives, ArraysOfObjects) {
+            """
+            if (indices.isEmpty()) return listOf()
+            return copyOfRange(indices.start, indices.end + 1).asList()
             """
         }
 
-        doc(Strings) { "Returns a string containing characters at specified [indices]." }
+        doc(Strings) { "Returns a string containing characters at indices at the specified [indices]." }
         returns(Strings) { "String" }
         body(Strings) {
             """
@@ -539,7 +541,7 @@ fun filtering(): List<GenericFunction> {
 
     templates add f("sliceArray(indices: IntRange)") {
         only(ArraysOfObjectsSubtype, ArraysOfPrimitives)
-        doc { "Returns a list containing elements at specified [indices]." }
+        doc { "Returns a list containing elements at indices in the specified [indices] range." }
         returns("SELF")
         body(ArraysOfObjectsSubtype) {
             """

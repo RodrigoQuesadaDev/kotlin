@@ -996,127 +996,87 @@ public inline fun <C : Appendable> String.filterTo(destination: C, predicate: (C
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun <T> Array<out T>.slice(indices: IntRange): List<T> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<T>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun BooleanArray.slice(indices: IntRange): List<Boolean> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Boolean>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun ByteArray.slice(indices: IntRange): List<Byte> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Byte>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun CharArray.slice(indices: IntRange): List<Char> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Char>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun DoubleArray.slice(indices: IntRange): List<Double> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Double>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun FloatArray.slice(indices: IntRange): List<Float> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Float>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun IntArray.slice(indices: IntRange): List<Int> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Int>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun LongArray.slice(indices: IntRange): List<Long> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Long>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun ShortArray.slice(indices: IntRange): List<Short> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<Short>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return copyOfRange(indices.start, indices.end + 1).asList()
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun <T> List<T>.slice(indices: IntRange): List<T> {
     if (indices.isEmpty()) return listOf()
-    val list = ArrayList<T>(indices.end - indices.start + 1)
-    for (index in indices) {
-        list.add(get(index))
-    }
-    return list
+    return this.subList(indices.start, indices.end + 1).toList()
 }
 
 /**
- * Returns a string containing characters at specified [indices].
+ * Returns a string containing characters at indices at the specified [indices].
  */
 public fun String.slice(indices: IntRange): String {
     if (indices.isEmpty()) return ""
@@ -1376,7 +1336,7 @@ public fun ShortArray.sliceArray(indices: Collection<Int>): ShortArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun <T, A: Array<out T>> A.sliceArray(indices: IntRange): A {
     if (indices.isEmpty()) return copyOf(0) as A
@@ -1384,7 +1344,7 @@ public fun <T, A: Array<out T>> A.sliceArray(indices: IntRange): A {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun BooleanArray.sliceArray(indices: IntRange): BooleanArray {
     if (indices.isEmpty()) return BooleanArray(0)
@@ -1392,7 +1352,7 @@ public fun BooleanArray.sliceArray(indices: IntRange): BooleanArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun ByteArray.sliceArray(indices: IntRange): ByteArray {
     if (indices.isEmpty()) return ByteArray(0)
@@ -1400,7 +1360,7 @@ public fun ByteArray.sliceArray(indices: IntRange): ByteArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun CharArray.sliceArray(indices: IntRange): CharArray {
     if (indices.isEmpty()) return CharArray(0)
@@ -1408,7 +1368,7 @@ public fun CharArray.sliceArray(indices: IntRange): CharArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun DoubleArray.sliceArray(indices: IntRange): DoubleArray {
     if (indices.isEmpty()) return DoubleArray(0)
@@ -1416,7 +1376,7 @@ public fun DoubleArray.sliceArray(indices: IntRange): DoubleArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun FloatArray.sliceArray(indices: IntRange): FloatArray {
     if (indices.isEmpty()) return FloatArray(0)
@@ -1424,7 +1384,7 @@ public fun FloatArray.sliceArray(indices: IntRange): FloatArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun IntArray.sliceArray(indices: IntRange): IntArray {
     if (indices.isEmpty()) return IntArray(0)
@@ -1432,7 +1392,7 @@ public fun IntArray.sliceArray(indices: IntRange): IntArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun LongArray.sliceArray(indices: IntRange): LongArray {
     if (indices.isEmpty()) return LongArray(0)
@@ -1440,7 +1400,7 @@ public fun LongArray.sliceArray(indices: IntRange): LongArray {
 }
 
 /**
- * Returns a list containing elements at specified [indices].
+ * Returns a list containing elements at indices in the specified [indices] range.
  */
 public fun ShortArray.sliceArray(indices: IntRange): ShortArray {
     if (indices.isEmpty()) return ShortArray(0)
