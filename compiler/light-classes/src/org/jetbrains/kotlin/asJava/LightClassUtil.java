@@ -152,7 +152,7 @@ public class LightClassUtil {
         }
         List<PsiMethod> wrappers = getPsiMethodWrappers(property, true);
         for (PsiMethod wrapper : wrappers) {
-            if ((accessor.isGetter() && wrapper.getName().startsWith(JvmAbi.GETTER_PREFIX)) ||
+            if ((accessor.isGetter() && !wrapper.getName().startsWith(JvmAbi.SETTER_PREFIX)) ||
                 (accessor.isSetter() && wrapper.getName().startsWith(JvmAbi.SETTER_PREFIX))) {
                 return wrapper;
             }
