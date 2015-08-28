@@ -6129,6 +6129,93 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("compiler/testData/diagnostics/tests/generics/nullability")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Nullability extends AbstractJetDiagnosticsTest {
+                public void testAllFilesPresentInNullability() throws Exception {
+                    JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/diagnostics/tests/generics/nullability"), Pattern.compile("^(.+)\\.kt$"), true);
+                }
+
+                @TestMetadata("declarationsBoundsViolation.kt")
+                public void testDeclarationsBoundsViolation() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/declarationsBoundsViolation.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("expressionsBoundsViolation.kt")
+                public void testExpressionsBoundsViolation() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/expressionsBoundsViolation.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("functionalBound.kt")
+                public void testFunctionalBound() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/functionalBound.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("nullToGeneric.kt")
+                public void testNullToGeneric() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/nullToGeneric.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("smartCastRefinedClass.kt")
+                public void testSmartCastRefinedClass() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/smartCastRefinedClass.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("smartCasts.kt")
+                public void testSmartCasts() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/smartCasts.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("smartCastsOnThis.kt")
+                public void testSmartCastsOnThis() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/smartCastsOnThis.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("smartCastsValueArgument.kt")
+                public void testSmartCastsValueArgument() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/smartCastsValueArgument.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("tpBoundsViolation.kt")
+                public void testTpBoundsViolation() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/tpBoundsViolation.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("tpBoundsViolationVariance.kt")
+                public void testTpBoundsViolationVariance() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/tpBoundsViolationVariance.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("tpInBounds.kt")
+                public void testTpInBounds() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/tpInBounds.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("useAsReceiver.kt")
+                public void testUseAsReceiver() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/useAsReceiver.kt");
+                    doTest(fileName);
+                }
+
+                @TestMetadata("useAsValueArgument.kt")
+                public void testUseAsValueArgument() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/generics/nullability/useAsValueArgument.kt");
+                    doTest(fileName);
+                }
+            }
+
             @TestMetadata("compiler/testData/diagnostics/tests/generics/starProjections")
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)

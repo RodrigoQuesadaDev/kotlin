@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.noExpectedType
 import org.jetbrains.kotlin.types.checker.JetTypeChecker
+import org.jetbrains.kotlin.types.checker.TypeCheckingProcedure
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils
 import java.util.ArrayList
 
@@ -439,28 +440,49 @@ public class CandidateResolver(
         if (TypeUtils.dependsOnTypeParameters(receiverParameter.getType(), candidateDescriptor.getTypeParameters())) return SUCCESS
 
         val safeAccess = isExplicitReceiver && !implicitInvokeCheck && candidateCall.getCall().isExplicitSafeCall()
-        val isSubtypeBySmartCast = smartCastManager.isSubTypeBySmartCastIgnoringNullability(
+        val isSubtypeBySmartCastIgnoringNullability = smartCastManager.isSubTypeBySmartCastIgnoringNullability(
                 receiverArgument, receiverParameter.getType(), this)
-        if (!isSubtypeBySmartCast) {
+
+        if (!isSubtypeBySmartCastIgnoringNullability) {
             tracing.wrongReceiverType(trace, receiverParameter, receiverArgument)
             return OTHER_ERROR
         }
-        if (!smartCastManager.recordSmartCastIfNecessary(receiverArgument, receiverParameter.getType(), this, safeAccess)) {
-            return OTHER_ERROR
-        }
 
-        val receiverArgumentType = receiverArgument.getType()
+        // Here we know that receiver is OK ignoring nullability and check that nullability is OK too
+        // Doing it simply as full subtyping check (receiverValueType <: receiverParameterType)
+        val expectedReceiverParameterType = if (safeAccess) TypeUtils.makeNullable(receiverParameter.type) else receiverParameter.type
+        val smartCastNeeded = !ArgumentTypeResolver.isSubtypeOfForArgumentType(receiverArgument.type, expectedReceiverParameterType)
+        var reportUnsafeCall = false
 
-        val bindingContext = trace.getBindingContext()
-        if (!safeAccess && !receiverParameter.getType().isMarkedNullable() && receiverArgumentType.isMarkedNullable()) {
-            if (!smartCastManager.canBeSmartCast(receiverParameter, receiverArgument, this)) {
-                tracing.unsafeCall(trace, receiverArgumentType, implicitInvokeCheck)
-                return UNSAFE_CALL_ERROR
+        if (smartCastNeeded) {
+            // Look if smart cast has some useful nullability info
+            val expression = (receiverArgument as? ExpressionReceiver)?.expression
+            val dataFlowValue = DataFlowValueFactory.createDataFlowValue(receiverArgument, this)
+
+            val smartCastResult = smartCastManager.checkAndRecordPossibleCast(
+                    dataFlowValue, expectedReceiverParameterType, expression, this, /*recordType =*/ true
+            )
+
+            if (smartCastResult == null) {
+                reportUnsafeCall = true
+            }
+            else if (!smartCastResult.isCorrect) {
+                // Error about unstable smart cast reported within checkAndRecordPossibleCast
+                return OTHER_ERROR
             }
         }
+
+        val receiverArgumentType = receiverArgument.type
+
+        if (reportUnsafeCall) {
+            tracing.unsafeCall(trace, receiverArgumentType, implicitInvokeCheck)
+            return UNSAFE_CALL_ERROR
+        }
+
+        val bindingContext = trace.bindingContext
         val receiverValue = DataFlowValueFactory.createDataFlowValue(receiverArgument, bindingContext, scope.getContainingDeclaration())
         if (safeAccess && !dataFlowInfo.getNullability(receiverValue).canBeNull()) {
-            tracing.unnecessarySafeCall(trace, receiverArgumentType)
+            tracing.unnecessarySafeCall(trace, receiverArgument.type)
         }
 
         additionalTypeCheckers.forEach { it.checkReceiver(receiverParameter, receiverArgument, safeAccess, this) }
