@@ -116,6 +116,9 @@ fun ordering(): List<GenericFunction> {
     templates add f("sortedArray()") {
         only(ArraysOfObjectsSubtype, ArraysOfPrimitives)
         exclude(PrimitiveType.Boolean)
+        doc {
+            "Returns an array with all elements of this array sorted according to their natural sort order."
+        }
         typeParam("T : Comparable<T>")
         returns("SELF")
         body() {
@@ -162,6 +165,9 @@ fun ordering(): List<GenericFunction> {
     templates add f("sortedArrayDescending()") {
         only(ArraysOfObjectsSubtype, ArraysOfPrimitives)
         exclude(PrimitiveType.Boolean)
+        doc {
+            "Returns an array with all elements of this array sorted descending according to their natural sort order."
+        }
         typeParam("T : Comparable<T>")
         returns("SELF")
         body(ArraysOfObjectsSubtype) {
@@ -216,6 +222,9 @@ fun ordering(): List<GenericFunction> {
 
     templates add f("sortedArrayWith(comparator: Comparator<in T>)") {
         only(ArraysOfObjectsSubtype)
+        doc {
+            "Returns an array with all elements of this array sorted according the specified [comparator]."
+        }
         returns("SELF")
         body() {
             """
