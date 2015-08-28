@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.jvm.RuntimeAssertionsTypeChecker
 import org.jetbrains.kotlin.lexer.JetTokens
+import org.jetbrains.kotlin.load.java.lazy.types.RawTypeTag
 import org.jetbrains.kotlin.load.java.lazy.types.isMarkedNotNull
 import org.jetbrains.kotlin.load.java.lazy.types.isMarkedNullable
 import org.jetbrains.kotlin.load.kotlin.JavaAnnotationCallChecker
@@ -57,7 +58,10 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.NullabilityInforma
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.checker.JetTypeChecker
+import org.jetbrains.kotlin.types.checker.TypeCheckingProcedure
 import org.jetbrains.kotlin.types.expressions.SenselessComparisonChecker
+import org.jetbrains.kotlin.utils.sure
 
 public object JvmPlatformConfigurator : PlatformConfigurator(
         DynamicTypesSettings(),
@@ -80,7 +84,8 @@ public object JvmPlatformConfigurator : PlatformConfigurator(
 
         additionalTypeCheckers = listOf(
                 JavaNullabilityWarningsChecker(),
-                RuntimeAssertionsTypeChecker
+                RuntimeAssertionsTypeChecker,
+                JavaGenericVarianceViolationTypeChecker
         ),
 
         additionalSymbolUsageValidators = listOf(),
@@ -445,4 +450,69 @@ public class JavaNullabilityWarningsChecker : AdditionalTypeChecker {
             }
         }
     }
+}
+
+public object JavaGenericVarianceViolationTypeChecker : AdditionalTypeChecker {
+    // Prohibits covariant type argument conversions `List<String> -> (MutableList<Any>..List<Any>)` when expected type's lower bound is invariant.
+    // It's needed to prevent accident unsafe covariant conversions of mutable collections.
+    //
+    // Example:
+    // class JavaClass { static void fillWithDefaultObjects(List<Object> list); // add Object's to list }
+    //
+    // val x: MutableList<String>
+    // JavaClass.fillWithDefaultObjects(x) // using `x` after this call may lead to CCE
+    override fun checkType(
+            expression: JetExpression,
+            expressionType: JetType,
+            possibleCastExpressionType: JetType,
+            c: ResolutionContext<*>
+    ) {
+        if (TypeUtils.noExpectedType(c.expectedType)) return
+
+        val expectedType = c.expectedType
+        // optimization: if no arguments or flexibility, everything is OK
+        if (expectedType.arguments.isEmpty() || !expectedType.isFlexible()) return
+
+        val lowerBound = expectedType.flexibility().lowerBound
+        val upperBound = expectedType.flexibility().upperBound
+
+        if (lowerBound.constructor == upperBound.constructor) return
+        // Anything is acceptable for raw types
+        if (expectedType.getCapability<RawTypeTag>() != null) return
+
+        val correspondingSubType = TypeCheckingProcedure.findCorrespondingSupertype(possibleCastExpressionType, upperBound) ?: return
+
+        assert(lowerBound.arguments.size() == upperBound.arguments.size()) {
+            "Different arguments count in flexible bounds: " +
+            "($lowerBound(${lowerBound.arguments.size()})..$upperBound(${upperBound.arguments.size()})"
+        }
+
+        assert(upperBound.arguments.size() == correspondingSubType.arguments.size()) {
+            "Different arguments count in corresponding subtype and supertype: " +
+            "($upperBound(${upperBound.arguments.size()})..$correspondingSubType(${correspondingSubType.arguments.size()})"
+        }
+
+
+        val lowerParameters = lowerBound.constructor.parameters
+        val upperParameters = upperBound.constructor.parameters
+        val lowerArguments = lowerBound.arguments
+
+        correspondingSubType.arguments.indices.forEach {
+            index ->
+            val lowerArgument = lowerArguments[index]
+
+            if (lowerParameters[index].variance == Variance.INVARIANT
+                && upperParameters[index].variance == Variance.OUT_VARIANCE
+                && lowerArgument.projectionKind != Variance.OUT_VARIANCE
+                && !JetTypeChecker.DEFAULT.equalTypes(correspondingSubType.arguments[index].type, lowerArgument.type)
+            ) {
+                c.trace.report(ErrorsJvm.JAVA_GENERIC_VARIANCE_VIOLATION.on(expression, possibleCastExpressionType, expectedType))
+            }
+        }
+    }
+
+    override fun checkReceiver(
+            receiverParameter: ReceiverParameterDescriptor,
+            receiverArgument: ReceiverValue,
+            safeAccess: Boolean, c: CallResolutionContext<*>) { }
 }
