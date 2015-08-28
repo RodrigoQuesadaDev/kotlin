@@ -1,3 +1,3 @@
 fun box() = o + k
 
-private val o = "O"
+internal val o = "O"

@@ -1,3 +1,3 @@
-private val k = "K"
+internal val k = "K"
 
 fun ignore() = o
