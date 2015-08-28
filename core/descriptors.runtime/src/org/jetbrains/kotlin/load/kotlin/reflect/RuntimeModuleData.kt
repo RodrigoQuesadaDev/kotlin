@@ -54,7 +54,6 @@ public class RuntimeModuleData private constructor(public val module: ModuleDesc
                     JavaPropertyInitializerEvaluator.DoNothing, SamConversionResolver, RuntimeSourceElementFactory, singleModuleClassResolver,
                     if (moduleName == null) PackageFacadeProvider.EMPTY else RuntimePackageFacadeProvider(moduleName, classLoader)
             )
-                println("moduleName $moduleName")
             val lazyJavaPackageFragmentProvider =
                     LazyJavaPackageFragmentProvider(globalJavaResolverContext, module, ReflectionTypes(module))
             val javaDescriptorResolver = JavaDescriptorResolver(lazyJavaPackageFragmentProvider, module)

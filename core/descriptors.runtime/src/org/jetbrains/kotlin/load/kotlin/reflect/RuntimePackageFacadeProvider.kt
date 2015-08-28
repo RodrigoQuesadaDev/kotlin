@@ -24,29 +24,25 @@ import java.io.ByteArrayOutputStream
 class RuntimePackageFacadeProvider(val moduleName: String, val classLoader : ClassLoader) : PackageFacadeProvider {
 
     val mapping: ModuleMapping by lazy {
-        print("finding metainf for $moduleName")
         val resourceAsStream = classLoader.getResourceAsStream("META-INF/$moduleName.kotlin_module") ?: return@lazy ModuleMapping("")
 
-        print("OK")
-
         try {
-            val out = ByteArrayOutputStream(4096);
-            val buffer = ByteArray(4096);
+            val out = ByteArrayOutputStream(4096)
+            val buffer = ByteArray(4096)
             while (true) {
-                val r = resourceAsStream.read(buffer);
-                if (r == -1) break;
-                out.write(buffer, 0, r);
+                val r = resourceAsStream.read(buffer)
+                if (r == -1) break
+                out.write(buffer, 0, r)
             }
 
-            val ret = out.toByteArray();
+            val ret = out.toByteArray()
             return@lazy ModuleMapping(String(ret, "UTF-8"))
         } finally {
             resourceAsStream.close()
         }
     }
 
-    override fun findPackageFacades(packageName: String): List<String> {
-        print("finding $packageName")
-        return mapping.package2MiniFacades.getOrElse (packageName, { PackageFacades("default") }).parts.toList()
+    override fun findPackageFacades(packageInternalName: String): List<String> {
+        return mapping.package2MiniFacades.getOrElse (packageInternalName, { PackageFacades("default") }).parts.toList()
     }
 }
