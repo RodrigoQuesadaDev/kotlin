@@ -460,7 +460,9 @@ fun filtering(): List<GenericFunction> {
         returns("List<T>")
         body {
             """
-            val list = ArrayList<T>(indices.collectionSizeOrDefault(10))
+            val size = indices.collectionSizeOrDefault(10)
+            if (size == 0) return listOf()
+            val list = ArrayList<T>(size)
             for (index in indices) {
                 list.add(get(index))
             }
@@ -472,11 +474,83 @@ fun filtering(): List<GenericFunction> {
         returns(Strings) { "String" }
         body(Strings) {
             """
-            val result = StringBuilder(indices.collectionSizeOrDefault(10))
+            val size = indices.collectionSizeOrDefault(10)
+            if (size == 0) return ""
+            val result = StringBuilder(size)
             for (i in indices) {
                 result.append(get(i))
             }
             return result.toString()
+            """
+        }
+    }
+
+    templates add f("slice(indices: IntRange)") {
+        only(Strings, Lists, ArraysOfPrimitives, ArraysOfObjects)
+        doc { "Returns a list containing elements at specified [indices]." }
+        returns("List<T>")
+        body {
+            """
+            if (indices.isEmpty()) return listOf()
+            val list = ArrayList<T>(indices.end - indices.start + 1)
+            for (index in indices) {
+                list.add(get(index))
+            }
+            return list
+            """
+        }
+
+        doc(Strings) { "Returns a string containing characters at specified [indices]." }
+        returns(Strings) { "String" }
+        body(Strings) {
+            """
+            if (indices.isEmpty()) return ""
+            return substring(indices)
+            """
+        }
+    }
+
+    templates add f("sliceArray(indices: Collection<Int>)") {
+        only(ArraysOfObjectsSubtype, ArraysOfPrimitives)
+        doc { "Returns an array containing elements of this array at specified [indices]." }
+        returns("SELF")
+        body(ArraysOfObjectsSubtype) {
+            """
+            if (indices.isEmpty()) return arrayOfNulls(this, 0) as SELF
+            val result = arrayOfNulls(this, indices.size()) as Array<T>
+            var targetIndex = 0
+            for (sourceIndex in indices) {
+                result[targetIndex++] = this[sourceIndex]
+            }
+            return result as SELF
+            """
+        }
+        body(ArraysOfPrimitives) {
+            """
+            val result = SELF(indices.size())
+            var targetIndex = 0
+            for (sourceIndex in indices) {
+                result[targetIndex++] = this[sourceIndex]
+            }
+            return result
+            """
+        }
+    }
+
+    templates add f("sliceArray(indices: IntRange)") {
+        only(ArraysOfObjectsSubtype, ArraysOfPrimitives)
+        doc { "Returns a list containing elements at specified [indices]." }
+        returns("SELF")
+        body(ArraysOfObjectsSubtype) {
+            """
+            if (indices.isEmpty()) return copyOf(0) as SELF
+            return copyOfRange(indices.start, indices.end + 1)
+            """
+        }
+        body(ArraysOfPrimitives) {
+            """
+            if (indices.isEmpty()) return SELF(0)
+            return copyOfRange(indices.start, indices.end + 1)
             """
         }
     }
