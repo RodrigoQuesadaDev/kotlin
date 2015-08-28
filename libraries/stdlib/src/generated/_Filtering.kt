@@ -1340,7 +1340,7 @@ public fun ShortArray.sliceArray(indices: Collection<Int>): ShortArray {
  */
 public fun <T, A: Array<out T>> A.sliceArray(indices: IntRange): A {
     if (indices.isEmpty()) return copyOf(0) as A
-    return copyOfRange(indices.start, indices.end + 1)
+    return copyOfRange(indices.start, indices.end + 1) as A
 }
 
 /**

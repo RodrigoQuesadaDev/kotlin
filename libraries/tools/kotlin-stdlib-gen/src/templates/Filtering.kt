@@ -546,7 +546,7 @@ fun filtering(): List<GenericFunction> {
         body(ArraysOfObjectsSubtype) {
             """
             if (indices.isEmpty()) return copyOf(0) as SELF
-            return copyOfRange(indices.start, indices.end + 1)
+            return copyOfRange(indices.start, indices.end + 1) as SELF
             """
         }
         body(ArraysOfPrimitives) {
