@@ -70,6 +70,7 @@ public class CodegenTestUtil {
                 configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION, false),
                 null,
                 null,
+                null,
                 forExtraDiagnostics,
                 null
         );

@@ -362,19 +362,9 @@ class KotlinEvaluator(val codeFragment: JetCodeFragment,
                     override fun shouldGenerateScript(script: JetScript) = false
                 }
 
-                val state = GenerationState(
-                        jetFile.project,
-                        ClassBuilderFactories.BINARIES,
-                        Progress.DEAF,
-                        moduleDescriptor,
-                        bindingContext,
-                        files,
-                        true, true,
-                        generateClassFilter,
-                        false, false,
-                        null, null,
-                        DiagnosticSink.DO_NOTHING,
-                        null)
+                val state = GenerationState(jetFile.project, ClassBuilderFactories.BINARIES, Progress.DEAF,
+                                            moduleDescriptor, bindingContext, files, true, true, generateClassFilter,
+                                            false, false, null, null, null, DiagnosticSink.DO_NOTHING, null)
 
                 val frameVisitor = FrameVisitor(context)
 

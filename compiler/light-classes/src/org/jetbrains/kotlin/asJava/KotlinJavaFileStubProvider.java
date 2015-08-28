@@ -419,6 +419,7 @@ public class KotlinJavaFileStubProvider<T extends WithFileStubAndExtraDiagnostic
                     /*disableOptimization=*/false,
                     null,
                     null,
+                    null,
                     forExtraDiagnostics,
                     null
             );

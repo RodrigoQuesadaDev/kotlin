@@ -102,6 +102,9 @@ public class GenerationState {
     private final String moduleId; // for PackageCodegen in incremental compilation mode
 
     @Nullable
+    private final String moduleName;
+
+    @Nullable
     private final File outDirectory; // TODO: temporary hack, see JetTypeMapperWithOutDirectory state for details
 
     public GenerationState(
@@ -112,7 +115,7 @@ public class GenerationState {
             @NotNull List<JetFile> files
     ) {
         this(project, builderFactory, Progress.DEAF, module, bindingContext, files, true, true, GenerateClassFilter.GENERATE_ALL,
-             false, false, null, null, DiagnosticSink.DO_NOTHING, null);
+             false, false, null, null, null, DiagnosticSink.DO_NOTHING, null);
     }
 
     public GenerationState(
@@ -129,6 +132,7 @@ public class GenerationState {
             boolean disableOptimization,
             @Nullable Collection<FqName> packagesWithObsoleteParts,
             @Nullable String moduleId,
+            @Nullable String moduleName,
             @NotNull DiagnosticSink diagnostics,
             @Nullable File outDirectory
     ) {
@@ -137,6 +141,7 @@ public class GenerationState {
         this.module = module;
         this.files = files;
         this.moduleId = moduleId;
+        this.moduleName = moduleName;
         this.packagesWithObsoleteParts = packagesWithObsoleteParts == null ? Collections.<FqName>emptySet() : packagesWithObsoleteParts;
         this.classBuilderMode = builderFactory.getClassBuilderMode();
         this.disableInline = disableInline;
@@ -314,5 +319,10 @@ public class GenerationState {
     @Nullable
     public File getOutDirectory() {
         return outDirectory;
+    }
+
+    @NotNull
+    public String getModuleName() {
+        return moduleName != null ? moduleName : JvmCodegenUtil.getModuleName(module);
     }
 }

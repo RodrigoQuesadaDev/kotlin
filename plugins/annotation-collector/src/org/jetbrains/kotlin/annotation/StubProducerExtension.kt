@@ -42,7 +42,7 @@ public class StubProducerExtension(val stubsOutputDir: File) : AnalysisCompleted
             files: Collection<JetFile>
     ): AnalysisResult? {
         val forExtraDiagnostics = BindingTraceContext()
-        
+
         val generationState = GenerationState(
                 project,
                 StubClassBuilderFactory(),
@@ -57,6 +57,7 @@ public class StubProducerExtension(val stubsOutputDir: File) : AnalysisCompleted
                 /*disableOptimization =*/ false,
                 /*packagesWithObsoleteParts =*/ null,
                 /*moduleId =*/ null,
+                null,
                 forExtraDiagnostics,
                 /*outDirectory =*/ null)
 

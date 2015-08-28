@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.codegen.CompilationErrorHandler;
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.Progress;
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor;
 import org.jetbrains.kotlin.diagnostics.Diagnostic;
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink;
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages;
@@ -238,7 +237,7 @@ public class KotlinBytecodeToolWindow extends JPanel implements Disposable {
                                         toProcess, !enableAssertions, !enableAssertions,
                                         generateClassFilter,
                                         !enableInline, !enableOptimization, null, null,
-                                        sink, null);
+                                        null, sink, null);
             KotlinCodegenFacade.compileCorrectFiles(state, CompilationErrorHandler.THROW_EXCEPTION);
         }
         catch (ProcessCanceledException e) {

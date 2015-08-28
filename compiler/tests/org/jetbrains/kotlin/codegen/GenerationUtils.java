@@ -79,7 +79,7 @@ public class GenerationUtils {
                 project, ClassBuilderFactories.TEST, Progress.DEAF,
                 analysisResult.getModuleDescriptor(), analysisResult.getBindingContext(),
                 files, false, false, GenerationState.GenerateClassFilter.GENERATE_ALL,
-                false, false, null, null, DiagnosticSink.DO_NOTHING, null
+                false, false, null, null, null, DiagnosticSink.DO_NOTHING, null
         );
         KotlinCodegenFacade.compileCorrectFiles(state, CompilationErrorHandler.THROW_EXCEPTION);
         return state;

@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.Progress;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.context.ModuleContext;
-import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus;
 import org.jetbrains.kotlin.idea.MainFunctionDetector;
 import org.jetbrains.kotlin.load.kotlin.PackageClassUtils;
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache;
@@ -51,6 +50,7 @@ import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompil
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.parsing.JetScriptDefinition;
 import org.jetbrains.kotlin.parsing.JetScriptDefinitionProvider;
+import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus;
 import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.resolve.AnalyzerScriptParameter;
 import org.jetbrains.kotlin.resolve.BindingTrace;
@@ -152,7 +152,8 @@ public class KotlinToJVMBytecodeCompiler {
                     }
             );
             GenerationState generationState =
-                    generate(environment, result, jetFiles, module.getModuleName(), new File(module.getOutputDirectory()));
+                    generate(environment, result, jetFiles, module.getModuleName(), new File(module.getOutputDirectory()),
+                             module.getModuleName());
             outputFiles.put(module, generationState.getFactory());
         }
 
@@ -306,7 +307,7 @@ public class KotlinToJVMBytecodeCompiler {
 
         result.throwIfError();
 
-        return generate(environment, result, environment.getSourceFiles(), null, null);
+        return generate(environment, result, environment.getSourceFiles(), null, null, null);
     }
 
     @Nullable
@@ -361,7 +362,8 @@ public class KotlinToJVMBytecodeCompiler {
             @NotNull AnalysisResult result,
             @NotNull List<JetFile> sourceFiles,
             @Nullable String moduleId,
-            File outputDirectory
+            File outputDirectory,
+            String moduleName
     ) {
         CompilerConfiguration configuration = environment.getConfiguration();
         IncrementalCompilationComponents incrementalCompilationComponents = configuration.get(JVMConfigurationKeys.INCREMENTAL_COMPILATION_COMPONENTS);
@@ -392,6 +394,7 @@ public class KotlinToJVMBytecodeCompiler {
                 configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION, false),
                 packagesWithObsoleteParts,
                 moduleId,
+                moduleName,
                 diagnosticHolder,
                 outputDirectory
         );
