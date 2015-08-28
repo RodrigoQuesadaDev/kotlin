@@ -56,7 +56,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.noExpectedType
 import org.jetbrains.kotlin.types.checker.JetTypeChecker
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils
-import java.util.ArrayList
+import java.util.*
 
 public class CandidateResolver(
         private val argumentTypeResolver: ArgumentTypeResolver,
@@ -180,7 +180,7 @@ public class CandidateResolver(
     private fun CallCandidateResolutionContext<*>.checkVisibility() = checkAndReport {
         val receiverValue = ExpressionTypingUtils.normalizeReceiverValueForVisibility(candidateCall.getDispatchReceiver(),
                                                                                       trace.getBindingContext())
-        val invisibleMember = Visibilities.findInvisibleMember(receiverValue, candidateDescriptor, scope.getContainingDeclaration())
+        val invisibleMember = Visibilities.findInvisibleMember(receiverValue, candidateDescriptor, scope.ownerDescriptor)
         if (invisibleMember != null) {
             tracing.invisibleMember(trace, invisibleMember)
             OTHER_ERROR
@@ -458,7 +458,7 @@ public class CandidateResolver(
                 return UNSAFE_CALL_ERROR
             }
         }
-        val receiverValue = DataFlowValueFactory.createDataFlowValue(receiverArgument, bindingContext, scope.getContainingDeclaration())
+        val receiverValue = DataFlowValueFactory.createDataFlowValue(receiverArgument, bindingContext, scope.ownerDescriptor)
         if (safeAccess && !dataFlowInfo.getNullability(receiverValue).canBeNull()) {
             tracing.unnecessarySafeCall(trace, receiverArgumentType)
         }
