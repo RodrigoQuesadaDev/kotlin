@@ -147,10 +147,11 @@ public class FunctionCodegen {
         int flags = getMethodAsmFlags(functionDescriptor, contextKind);
         boolean isNative = NativeDeclarationsPackage.hasNativeAnnotation(functionDescriptor);
 
-        if (isNative && owner instanceof PackageContext && !(owner instanceof PackageFacadeContext)) {
-            // Native methods are only defined in package facades and do not need package part implementations
-            return;
-        }
+        //TODO: temporary disable while new minifacade == packagepart
+        //if (isNative && owner instanceof PackageContext && !(owner instanceof PackageFacadeContext)) {
+        //    // Native methods are only defined in package facades and do not need package part implementations
+        //    return;
+        //}
         MethodVisitor mv = v.newMethod(origin,
                                        flags,
                                        asmMethod.getName(),
