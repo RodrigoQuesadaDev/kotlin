@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.ResolvePackage;
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
 import org.jetbrains.kotlin.idea.util.ShortenReferences;
 import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm;
 import org.jetbrains.kotlin.types.JetType;
 import org.jetbrains.kotlin.types.checker.JetTypeChecker;
 
@@ -64,7 +65,11 @@ public class CastExpressionFix extends JetIntentionAction<JetExpression> {
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
         if (!super.isAvailable(project, editor, file)) return false;
         JetType expressionType = ResolvePackage.analyze(element).getType(element);
-        return expressionType != null && JetTypeChecker.DEFAULT.isSubtypeOf(type, expressionType);
+        return expressionType != null
+               && (
+                       JetTypeChecker.DEFAULT.isSubtypeOf(type, expressionType) // downcast
+                       || JetTypeChecker.DEFAULT.isSubtypeOf(expressionType, type) // upcast
+               );
     }
 
     @Override
@@ -103,6 +108,19 @@ public class CastExpressionFix extends JetIntentionAction<JetExpression> {
                 DiagnosticWithParameters2<JetExpression, JetType, String> diagnosticWithParameters =
                         Errors.SMARTCAST_IMPOSSIBLE.cast(diagnostic);
                 return new CastExpressionFix(diagnosticWithParameters.getPsiElement(), diagnosticWithParameters.getA());
+            }
+        };
+    }
+
+    @NotNull
+    public static JetSingleIntentionActionFactory createFactoryForGenericVarianceConversion() {
+        return new JetSingleIntentionActionFactory() {
+            @Nullable
+            @Override
+            public IntentionAction createAction(@NotNull Diagnostic diagnostic) {
+                DiagnosticWithParameters2<JetExpression, JetType, JetType> diagnosticWithParameters =
+                        ErrorsJvm.JAVA_GENERIC_VARIANCE_VIOLATION.cast(diagnostic);
+                return new CastExpressionFix(diagnosticWithParameters.getPsiElement(), diagnosticWithParameters.getB());
             }
         };
     }
