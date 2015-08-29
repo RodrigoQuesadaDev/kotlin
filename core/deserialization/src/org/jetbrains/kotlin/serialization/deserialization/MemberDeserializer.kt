@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.serialization.deserialization
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationWithTarget
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -232,10 +231,5 @@ public class MemberDeserializer(private val c: DeserializationContext) {
         is PackageFragmentDescriptor -> ProtoContainer(null, fqName)
         is DeserializedClassDescriptor -> ProtoContainer(classProto, null)
         else -> error("Only members in classes or package fragments should be serialized: $this")
-    }
-
-    private companion object {
-        val CONSTRUCTOR_PARAMETER_ANNOTATION_MAPPER =
-                { a: AnnotationDescriptor -> AnnotationWithTarget(a, AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER) }
     }
 }
