@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.diagnostics.Errors;
 import org.jetbrains.kotlin.lexer.JetModifierKeywordToken;
 import org.jetbrains.kotlin.lexer.JetTokens;
 import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.resolve.lazy.FileScopeProvider;
 import org.jetbrains.kotlin.types.JetType;
 import org.jetbrains.kotlin.types.SubstitutionUtils;
 import org.jetbrains.kotlin.types.TypeConstructor;
@@ -48,15 +49,18 @@ public class DeclarationsChecker {
     @NotNull private final BindingTrace trace;
     @NotNull private final ModifiersChecker.ModifiersCheckingProcedure modifiersChecker;
     @NotNull private final DescriptorResolver descriptorResolver;
+    @NotNull private final FileScopeProvider fileScopeProvider;
     @NotNull private final AnnotationChecker annotationChecker;
 
     public DeclarationsChecker(
             @NotNull DescriptorResolver descriptorResolver,
             @NotNull ModifiersChecker modifiersChecker,
             @NotNull AnnotationChecker annotationChecker,
+            @NotNull FileScopeProvider fileScopeProvider,
             @NotNull BindingTrace trace
     ) {
         this.descriptorResolver = descriptorResolver;
+        this.fileScopeProvider = fileScopeProvider;
         this.modifiersChecker = modifiersChecker.withTrace(trace);
         this.annotationChecker = annotationChecker;
         this.trace = trace;
@@ -328,6 +332,10 @@ public class DeclarationsChecker {
         checkPropertyInitializer(property, propertyDescriptor);
         checkAccessors(property, propertyDescriptor);
         checkDeclaredTypeInPublicMember(property, propertyDescriptor);
+
+        if (ResolvePackage.isConflictingWithSyntheticExtension(property, propertyDescriptor, fileScopeProvider)) {
+            trace.report(PROPERTY_CONFLICTING_WITH_SYNTHETIC_EXTENSION.on(property));
+        }
     }
 
     private void checkDeclaredTypeInPublicMember(JetNamedDeclaration member, CallableMemberDescriptor memberDescriptor) {

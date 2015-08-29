@@ -619,6 +619,8 @@ public class DefaultErrorMessages {
         MAP.put(INLINE_CALL_CYCLE, "The ''{0}'' invocation is a part of inline cycle", NAME);
         MAP.put(NON_LOCAL_RETURN_IN_DISABLED_INLINE, "Non-local returns are not allowed with inlining disabled");
 
+        MAP.put(PROPERTY_CONFLICTING_WITH_SYNTHETIC_EXTENSION, "This property conflicts with synthetic extension and should be removed to avoid breaking code by future changes in the compiler");
+
         MAP.setImmutable();
 
         for (Field field : Errors.class.getFields()) {

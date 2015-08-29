@@ -318,6 +318,8 @@ public interface Errors {
 
     DiagnosticFactory2<JetTypeReference, JetType, JetType> WRONG_SETTER_PARAMETER_TYPE = DiagnosticFactory2.create(ERROR);
 
+    DiagnosticFactory0<JetProperty> PROPERTY_CONFLICTING_WITH_SYNTHETIC_EXTENSION = DiagnosticFactory0.create(WARNING, DECLARATION_NAME);
+
     // Function-specific
 
     DiagnosticFactory2<JetFunction, String, ClassDescriptor> ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS = DiagnosticFactory2.create(ERROR, ABSTRACT_MODIFIER);

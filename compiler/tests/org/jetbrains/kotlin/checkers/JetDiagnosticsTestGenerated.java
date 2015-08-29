@@ -14357,6 +14357,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                     doTest(fileName);
                 }
 
+                @TestMetadata("ConflictingProperties.kt")
+                public void testConflictingProperties() throws Exception {
+                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/ConflictingProperties.kt");
+                    doTest(fileName);
+                }
+
                 @TestMetadata("FalseGetters.kt")
                 public void testFalseGetters() throws Exception {
                     String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/FalseGetters.kt");

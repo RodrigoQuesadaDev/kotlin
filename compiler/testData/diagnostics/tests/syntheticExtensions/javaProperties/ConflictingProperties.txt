@@ -1,0 +1,63 @@
+package
+
+internal val MyFile.isFile: kotlin.Boolean
+internal val java.io.File.name: kotlin.String
+internal val java.io.Serializable.name: kotlin.String
+internal val java.io.File.parent: java.io.File
+
+internal final class MyFile : java.io.File {
+    public constructor MyFile()
+    invisible_fake final override /*1*/ /*fake_override*/ var filePath: [ERROR : Unresolved java classifier: Path]!
+    invisible_fake final override /*1*/ /*fake_override*/ var path: kotlin.String!
+    invisible_fake final override /*1*/ /*fake_override*/ var prefixLength: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun canExecute(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun canRead(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun canWrite(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun compareTo(/*0*/ other: java.io.File!): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun createNewFile(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun delete(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun deleteOnExit(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun exists(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun getAbsoluteFile(): java.io.File!
+    public open override /*1*/ /*fake_override*/ fun getAbsolutePath(): kotlin.String!
+    public open override /*1*/ /*fake_override*/ fun getCanonicalFile(): java.io.File!
+    public open override /*1*/ /*fake_override*/ fun getCanonicalPath(): kotlin.String!
+    public open override /*1*/ /*fake_override*/ fun getFreeSpace(): kotlin.Long
+    public open override /*1*/ /*fake_override*/ fun getName(): kotlin.String!
+    public open override /*1*/ /*fake_override*/ fun getParent(): kotlin.String!
+    public open override /*1*/ /*fake_override*/ fun getParentFile(): java.io.File!
+    public open override /*1*/ /*fake_override*/ fun getPath(): kotlin.String!
+    invisible_fake open override /*1*/ /*fake_override*/ fun getPrefixLength(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun getTotalSpace(): kotlin.Long
+    public open override /*1*/ /*fake_override*/ fun getUsableSpace(): kotlin.Long
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun isAbsolute(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun isDirectory(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun isFile(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun isHidden(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun lastModified(): kotlin.Long
+    public open override /*1*/ /*fake_override*/ fun length(): kotlin.Long
+    public open override /*1*/ /*fake_override*/ fun list(): kotlin.Array<(out) kotlin.String!>!
+    public open override /*1*/ /*fake_override*/ fun list(/*0*/ p0: java.io.FilenameFilter!): kotlin.Array<(out) kotlin.String!>!
+    public open override /*1*/ /*fake_override*/ fun listFiles(): kotlin.Array<(out) java.io.File!>!
+    public open override /*1*/ /*fake_override*/ fun listFiles(/*0*/ p0: java.io.FileFilter!): kotlin.Array<(out) java.io.File!>!
+    public open override /*1*/ /*fake_override*/ fun listFiles(/*0*/ p0: java.io.FilenameFilter!): kotlin.Array<(out) java.io.File!>!
+    public open override /*1*/ /*fake_override*/ fun mkdir(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun mkdirs(): kotlin.Boolean
+    invisible_fake open override /*1*/ /*fake_override*/ fun readObject(/*0*/ p0: java.io.ObjectInputStream!): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun renameTo(/*0*/ p0: java.io.File!): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setExecutable(/*0*/ p0: kotlin.Boolean): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setExecutable(/*0*/ p0: kotlin.Boolean, /*1*/ p1: kotlin.Boolean): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setLastModified(/*0*/ p0: kotlin.Long): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setReadOnly(): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setReadable(/*0*/ p0: kotlin.Boolean): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setReadable(/*0*/ p0: kotlin.Boolean, /*1*/ p1: kotlin.Boolean): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setWritable(/*0*/ p0: kotlin.Boolean): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun setWritable(/*0*/ p0: kotlin.Boolean, /*1*/ p1: kotlin.Boolean): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun toPath(): [ERROR : Unresolved java classifier: Path]!
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    public open override /*1*/ /*fake_override*/ fun toURI(): java.net.URI!
+    kotlin.deprecated(value = "Deprecated in Java") public open override /*1*/ /*fake_override*/ fun toURL(): java.net.URL!
+    invisible_fake open override /*1*/ /*fake_override*/ fun writeObject(/*0*/ p0: java.io.ObjectOutputStream!): kotlin.Unit
+}
