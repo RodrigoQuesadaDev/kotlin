@@ -14,5 +14,5 @@ fun main(a: A, ml: MutableList<String>, l: List<String>) {
     a.foo(l)
 
     a.bar(<!JAVA_GENERIC_VARIANCE_VIOLATION!>ml<!>)
-    a.bar(<!JAVA_GENERIC_VARIANCE_VIOLATION!>l<!>)
+    a.bar(l)
 }

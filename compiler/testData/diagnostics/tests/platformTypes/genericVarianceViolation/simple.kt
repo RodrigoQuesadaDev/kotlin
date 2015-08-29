@@ -26,7 +26,7 @@ fun main(
 ) {
     // Lists
     a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>ml<!>)
-    a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>l<!>)
+    a.foo(l)
     a.foo(<!UNCHECKED_CAST!>ml as MutableList<Any><!>)
     a.foo(l as List<Any>)
 
@@ -42,25 +42,25 @@ fun main(
 
     // Sets
     a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>ms<!>)
-    a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>s<!>)
+    a.foo(s)
     a.foo(<!UNCHECKED_CAST!>ms as MutableSet<Any><!>)
     a.foo(s as Set<Any>)
 
     // Maps
     a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>mm<!>)
-    a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>m<!>)
+    a.foo(m)
     a.foo(<!UNCHECKED_CAST!>mm as MutableMap<Any, Any><!>)
     a.foo(m as Map<Any, Any>)
 
     // Map entries
     a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>mme<!>)
-    a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>me<!>)
+    a.foo(me)
     a.foo(<!UNCHECKED_CAST!>mme as MutableMap.MutableEntry<Any, Any><!>)
     a.foo(me as Map.Entry<Any, Any>)
 
     // Lists of lists
     a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>mll<!>)
-    a.foo(<!JAVA_GENERIC_VARIANCE_VIOLATION!>ll<!>)
+    a.foo(ll)
     a.foo(<!UNCHECKED_CAST!>mll as MutableList<MutableList<Any>><!>)
     a.foo(ll as List<List<Any>>)
 

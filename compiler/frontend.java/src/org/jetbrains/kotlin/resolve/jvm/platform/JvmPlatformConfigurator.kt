@@ -467,9 +467,9 @@ public object JavaGenericVarianceViolationTypeChecker : AdditionalTypeChecker {
             possibleCastExpressionType: JetType,
             c: ResolutionContext<*>
     ) {
-        if (TypeUtils.noExpectedType(c.expectedType)) return
-
         val expectedType = c.expectedType
+        if (TypeUtils.noExpectedType(expectedType) || ErrorUtils.containsErrorType(expectedType) || ErrorUtils.containsUninferredParameter(expectedType)) return
+
         // optimization: if no arguments or flexibility, everything is OK
         if (expectedType.arguments.isEmpty() || !expectedType.isFlexible()) return
 
@@ -480,7 +480,7 @@ public object JavaGenericVarianceViolationTypeChecker : AdditionalTypeChecker {
         // Anything is acceptable for raw types
         if (expectedType.getCapability<RawTypeTag>() != null) return
 
-        val correspondingSubType = TypeCheckingProcedure.findCorrespondingSupertype(possibleCastExpressionType, upperBound) ?: return
+        val correspondingSubType = TypeCheckingProcedure.findCorrespondingSupertype(possibleCastExpressionType, lowerBound) ?: return
 
         assert(lowerBound.arguments.size() == upperBound.arguments.size()) {
             "Different arguments count in flexible bounds: " +
