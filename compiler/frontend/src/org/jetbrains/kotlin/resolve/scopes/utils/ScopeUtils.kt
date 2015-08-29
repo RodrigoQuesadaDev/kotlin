@@ -21,10 +21,8 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.resolve.scopes.FileScope
-import org.jetbrains.kotlin.resolve.scopes.JetScope
-import org.jetbrains.kotlin.resolve.scopes.LexicalScope
+import org.jetbrains.kotlin.resolve.lazy.LazyFileScope
+import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.types.JetType
 import org.jetbrains.kotlin.util.collectionUtils.concat
 import org.jetbrains.kotlin.utils.Printer
@@ -73,35 +71,66 @@ public fun LexicalScope.getDeclarationsByLabel(labelName: Name): Collection<Decl
     }
 }
 
+// Result is guaranteed to be filtered by kind and name.
+public fun LexicalScope.getDescriptorsFiltered(
+        kindFilter: DescriptorKindFilter = DescriptorKindFilter.ALL,
+        nameFilter: (Name) -> Boolean = { true }
+): Collection<DeclarationDescriptor> {
+    if (kindFilter.kindMask == 0) return listOf()
+    return collectAllFromMeAndParent {
+        if (it is FileScope) {
+            it.getDescriptors(kindFilter, nameFilter)
+        } else {
+            it.getDeclaredDescriptors()
+        }
+    }.filter { kindFilter.accepts(it) && nameFilter(it.name) }
+}
+
+
 @deprecated("Use getOwnProperties instead")
-public fun LexicalScope.getLocalVariable(name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): VariableDescriptor? {
+public fun LexicalScope.getLocalVariable(name: Name): VariableDescriptor? {
     processForMeAndParent {
-        if (it is MemberScopeToFileScopeAdapter) { // todo remove hack
+        if (it is LazyFileScope) {
+            return it.getLocalVariable(name) // todo: remove hack for repl interpreter
+        }
+        else if (it is MemberScopeToFileScopeAdapter) { // todo remove hack
             return it.memberScope.getLocalVariable(name)
         }
-        else if (it !is FileScope) { // todo check this
-            it.getDeclaredVariables(name, location).singleOrNull()?.let { return it }
+        else if (it !is FileScope && it !is LexicalChainedScope) { // todo check this
+            it.getDeclaredVariables(name, NoLookupLocation.UNSORTED).singleOrNull()?.let { return it }
         }
     }
     return null
 }
 
-public fun LexicalScope.getClassifier(name: Name, location: LookupLocation = NoLookupLocation.UNSORTED): ClassifierDescriptor? {
+public fun LexicalScope.getClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? {
     processForMeAndParent {
         it.getDeclaredClassifier(name, location)?.let { return it }
     }
     return null
 }
 
+public fun LexicalScope.takeSnapshot(): LexicalScope = if (this is LexicalWritableScope) takeSnapshot() else this
+
 public fun LexicalScope.asJetScope(): JetScope {
     if (this is JetScope) return this
+    if (this is MemberScopeToFileScopeAdapter) return this.memberScope
     return LexicalToJetScopeAdapter(this)
 }
 
-@deprecated("Remove this method after scope refactoring")
 public fun JetScope.memberScopeAsFileScope(): FileScope = MemberScopeToFileScopeAdapter(this)
 
-private class LexicalToJetScopeAdapter(val lexicalScope: LexicalScope): JetScope {
+@deprecated("Remove this method after scope refactoring")
+public fun JetScope.asLexicalScope(): LexicalScope
+        = if (this is LexicalToJetScopeAdapter) {
+            lexicalScope
+        }
+        else {
+            memberScopeAsFileScope()
+        }
+
+private class LexicalToJetScopeAdapter(lexicalScope: LexicalScope): JetScope {
+    val lexicalScope = lexicalScope.takeSnapshot()
 
     override fun getClassifier(name: Name, location: LookupLocation) = lexicalScope.getClassifier(name, location)
 
@@ -148,6 +177,12 @@ private class LexicalToJetScopeAdapter(val lexicalScope: LexicalScope): JetScope
     override fun getImplicitReceiversHierarchy() = lexicalScope.getImplicitReceiversHierarchy()
     override fun getOwnDeclaredDescriptors() = lexicalScope.getDeclaredDescriptors()
 
+    override fun equals(other: Any?) = other is LexicalToJetScopeAdapter && other.lexicalScope == this.lexicalScope
+
+    override fun hashCode() = lexicalScope.hashCode()
+
+    override fun toString() = "LexicalToJetScopeAdapter for $lexicalScope"
+
     override fun printScopeStructure(p: Printer) {
         p.println(javaClass.simpleName)
         p.pushIndent()
@@ -184,11 +219,15 @@ private class MemberScopeToFileScopeAdapter(val memberScope: JetScope) : FileSco
 
     override fun getDeclaredClassifier(name: Name, location: LookupLocation) = memberScope.getClassifier(name, location)
 
-    override fun getDeclaredVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor> {
-        throw IllegalStateException()
-    }
+    override fun getDeclaredVariables(name: Name, location: LookupLocation) = memberScope.getProperties(name, location)
 
     override fun getDeclaredFunctions(name: Name, location: LookupLocation) = memberScope.getFunctions(name, location)
+
+    override fun equals(other: Any?) = other is MemberScopeToFileScopeAdapter && other.memberScope == memberScope
+
+    override fun hashCode() = memberScope.hashCode()
+
+    override fun toString() = "MemberScopeToFileScopeAdapter for $memberScope"
 
     override fun printStructure(p: Printer) {
         p.println(javaClass.simpleName)

@@ -20,16 +20,19 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.scopes.utils.takeSnapshot
 import org.jetbrains.kotlin.utils.Printer
 
-public open class LexicalScopeImpl(
-        override val parent: LexicalScope,
+public class LexicalScopeImpl jvmOverloads constructor(
+        parent: LexicalScope,
         override val ownerDescriptor: DeclarationDescriptor,
         override val isOwnerDescriptorAccessibleByLabel: Boolean,
         override val implicitReceiver: ReceiverParameterDescriptor?,
         private val debugName: String,
+        redeclarationHandler: RedeclarationHandler = RedeclarationHandler.DO_NOTHING,
         initialize: LexicalScopeImpl.InitializeHandler.() -> Unit = {}
 ): LexicalScope, WritableScopeStorage {
+    override val parent = parent.takeSnapshot()
     override val addedDescriptors: MutableList<DeclarationDescriptor> = SmartList()
     override val redeclarationHandler: RedeclarationHandler
         get() = RedeclarationHandler.DO_NOTHING
@@ -38,19 +41,16 @@ public open class LexicalScopeImpl(
     override var variablesAndClassifiersByName: MutableMap<Name, WritableScopeStorage.IntList>? = null
 
     init {
-        InitializeHandler().initialize()
+        InitializeHandler(redeclarationHandler).initialize()
     }
 
-    override fun getDeclaredDescriptors(): Collection<DeclarationDescriptor> = addedDescriptors
+    override fun getDeclaredDescriptors() = addedDescriptors
 
-    override fun getDeclaredClassifier(name: Name, location: LookupLocation)
-            = variableOrClassDescriptorByName(name) as? ClassifierDescriptor
+    override fun getDeclaredClassifier(name: Name, location: LookupLocation) = getDeclaredClassifier(name)
 
-    override fun getDeclaredVariables(name: Name, location: LookupLocation): Collection<VariableDescriptor>
-            = listOfNotNull(variableOrClassDescriptorByName(name) as? VariableDescriptor)
+    override fun getDeclaredVariables(name: Name, location: LookupLocation) = getDeclaredVariables(name)
 
-    override fun getDeclaredFunctions(name: Name, location: LookupLocation): Collection<FunctionDescriptor>
-            = functionsByName(name) ?: emptyList()
+    override fun getDeclaredFunctions(name: Name, location: LookupLocation) = getDeclaredFunctions(name)
 
     override fun toString(): String = debugName
 
@@ -66,14 +66,28 @@ public open class LexicalScopeImpl(
         p.println("}")
     }
 
-    inner class InitializeHandler {
-        public fun addVariableDescriptor(variableDescriptor: VariableDescriptor): Unit
-                = this@LexicalScopeImpl.addVariableOrClassDescriptor(variableDescriptor)
+    inner class InitializeHandler(override val redeclarationHandler: RedeclarationHandler): WritableScopeStorage {
+        override val addedDescriptors: MutableList<DeclarationDescriptor>
+            get() = this@LexicalScopeImpl.addedDescriptors
+        override var functionsByName: MutableMap<Name, WritableScopeStorage.IntList>?
+            get() = this@LexicalScopeImpl.functionsByName
+            set(value) {
+                this@LexicalScopeImpl.functionsByName = value
+            }
+        override var variablesAndClassifiersByName: MutableMap<Name, WritableScopeStorage.IntList>?
+            get() = this@LexicalScopeImpl.variablesAndClassifiersByName
+            set(value) {
+                this@LexicalScopeImpl.variablesAndClassifiersByName = value
+            }
 
-        public fun addFunctionDescriptor(functionDescriptor: FunctionDescriptor): Unit
-                = this@LexicalScopeImpl.addFunctionDescriptor(functionDescriptor)
+        public fun addVariableDescriptor(variableDescriptor: VariableDescriptor): Unit
+                = addVariableOrClassDescriptor(variableDescriptor)
+
+        public override fun addFunctionDescriptor(functionDescriptor: FunctionDescriptor): Unit
+                = super.addFunctionDescriptor(functionDescriptor)
 
         public fun addClassifierDescriptor(classifierDescriptor: ClassifierDescriptor): Unit
-                = this@LexicalScopeImpl.addVariableOrClassDescriptor(classifierDescriptor)
+                = addVariableOrClassDescriptor(classifierDescriptor)
+
     }
 }
