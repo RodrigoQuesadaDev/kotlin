@@ -1076,7 +1076,8 @@ public class DescriptorResolver {
             @NotNull ClassDescriptor classDescriptor,
             @NotNull ValueParameterDescriptor valueParameter,
             @NotNull LexicalScope scope,
-            @NotNull JetParameter parameter, BindingTrace trace
+            @NotNull JetParameter parameter,
+            final BindingTrace trace
     ) {
         JetType type = resolveParameterType(scope, parameter, trace);
         Name name = parameter.getNameAsSafeName();
